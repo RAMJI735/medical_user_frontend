@@ -1,0 +1,32 @@
+[
+  {
+    "id": "banner-planning",
+    "title": "Shaadi Expert",
+    "subtitle": "Lucknow’s premier wedding planning company offers top-notch services to make your special day unforgettable.",
+    "background": "linear-gradient(to right, #e11d48, #d946ef, #f97316)",
+    "button": {
+      "label": "Get Started",
+      "href": "#planning"
+    }
+  },
+  {
+    "id": "banner-decor",
+    "title": "Shaadi Expert",
+    "subtitle": "Transforming wedding spaces into breathtaking setups with custom floral design and premium aesthetics.",
+    "background": "linear-gradient(to right, #ff8f00, #f97316, #e11d48)",
+    "button": {
+      "label": "Explore Decor",
+      "href": "#decor"
+    }
+  },
+  {
+    "id": "banner-catering",
+    "title": "Exceptional Catering Services",
+    "subtitle": "Indulge in our carefully curated gourmet wedding menus and outstanding culinary service.",
+    "background": "linear-gradient(to right, #0f172a, #1e293b, #2563eb)",
+    "button": {
+      "label": "View Menu",
+      "href": "#catering"
+    }
+  }
+]
