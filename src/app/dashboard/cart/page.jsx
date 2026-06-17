@@ -32,7 +32,9 @@ import {
     ShieldCheck,
     CreditCard,
     ShoppingBag,
-    Pill
+    Pill,
+    MapPin,
+    Check
 } from "lucide-react";
 import { AddressService } from "../../../../services/addressService/addressService";
 import { OrderService } from "../../../../services/orderService/orderService";
@@ -43,7 +45,7 @@ export default function CartPage() {
     const [cartData, setCartData] = useState({ cartItems: [], totalItems: 0, totalPrice: 0 });
     const [loading, setLoading] = useState(true);
     const [updatingIds, setUpdatingIds] = useState({});
-    
+
     // Checkout states
     const [openCheckout, setOpenCheckout] = useState(false);
     const [addressLine1, setAddressLine1] = useState("");
@@ -52,6 +54,12 @@ export default function CartPage() {
     const [state, setState] = useState("");
     const [pincode, setPincode] = useState("");
     const [placingOrder, setPlacingOrder] = useState(false);
+
+    // New Address List states
+    const [addresses, setAddresses] = useState([]);
+    const [selectedAddressId, setSelectedAddressId] = useState("");
+    const [showAddAddressForm, setShowAddAddressForm] = useState(false);
+    const [loadingAddresses, setLoadingAddresses] = useState(false);
 
     const fetchCart = async () => {
         try {
@@ -65,15 +73,50 @@ export default function CartPage() {
         }
     };
 
+    const fetchAddresses = async () => {
+        try {
+            setLoadingAddresses(true);
+            const data = await AddressService.getAddresses();
+            const list = data || [];
+            setAddresses(list);
+
+            // Set selected address ID to default or first one
+            const defaultAddress = list.find(addr => addr.selected);
+            if (defaultAddress) {
+                setSelectedAddressId(defaultAddress._id);
+            } else if (list.length > 0) {
+                setSelectedAddressId(list[0]._id);
+            }
+
+            // Show add address form by default if user has no saved addresses
+            if (list.length === 0) {
+                setShowAddAddressForm(true);
+            } else {
+                setShowAddAddressForm(false);
+            }
+        } catch (error) {
+            console.error("Failed to fetch addresses:", error);
+        } finally {
+            setLoadingAddresses(false);
+        }
+    };
+
     useEffect(() => {
         if (!authLoading) {
             if (!user) {
                 router.push("/dashboard/login");
             } else {
                 fetchCart();
+                fetchAddresses();
             }
         }
     }, [user, authLoading]);
+
+    useEffect(() => {
+        if (openCheckout && user) {
+            fetchAddresses();
+        }
+    }, [openCheckout, user]);
 
     const handleQuantityChange = async (medicineId, currentQty, delta) => {
         const newQty = currentQty + delta;
@@ -128,29 +171,44 @@ export default function CartPage() {
 
     const handleConfirmOrder = async (e) => {
         if (e) e.preventDefault();
-        if (!addressLine1 || !city || !state || !pincode) {
-            toast.error("Please fill in all required address fields.");
-            return;
-        }
-        if (!/^\d{6}$/.test(pincode)) {
-            toast.error("Pincode must be a 6-digit number.");
-            return;
+
+        let addressId = selectedAddressId;
+
+        if (showAddAddressForm) {
+            if (!addressLine1 || !city || !state || !pincode) {
+                toast.error("Please fill in all required address fields.");
+                return;
+            }
+            if (!/^\d{6}$/.test(pincode)) {
+                toast.error("Pincode must be a 6-digit number.");
+                return;
+            }
+        } else {
+            if (!addressId) {
+                toast.error("Please select a delivery address.");
+                return;
+            }
         }
 
         setPlacingOrder(true);
         try {
-            // 1. Create Address
-            const addressRes = await AddressService.createAddress({
-                addressLine1,
-                addressLine2,
-                city,
-                state,
-                pincode
-            });
-            
-            const addressId = addressRes.address?._id || addressRes.data?.address?._id || addressRes._id;
-            if (!addressId) {
-                throw new Error("Failed to get created address ID");
+            if (showAddAddressForm) {
+                // 1. Create Address
+                const addressRes = await AddressService.createAddress({
+                    addressLine1,
+                    addressLine2,
+                    city,
+                    state,
+                    pincode
+                });
+
+                addressId = addressRes.address?._id || addressRes.data?.address?._id || addressRes._id;
+                if (!addressId) {
+                    throw new Error("Failed to get created address ID");
+                }
+
+                // Re-fetch addresses so the list is updated
+                await fetchAddresses();
             }
 
             // 2. Create Order
@@ -161,7 +219,7 @@ export default function CartPage() {
 
             toast.success("Order placed successfully!", { icon: "🎉" });
             setOpenCheckout(false);
-            
+
             // Reset fields
             setAddressLine1("");
             setAddressLine2("");
@@ -324,7 +382,7 @@ export default function CartPage() {
                                                     <Pill className="text-blue-400" size={24} />
                                                 )}
                                             </Box>
-                                            
+
                                             <Box>
                                                 <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#ffffff" }}>
                                                     {med.medicineName || "Unknown Medicine"}
@@ -357,11 +415,11 @@ export default function CartPage() {
                                                 >
                                                     <Minus size={14} />
                                                 </IconButton>
-                                                
+
                                                 <Typography sx={{ mx: 2, fontWeight: 700, minWidth: "16px", textAlign: "center" }}>
                                                     {item.quantity}
                                                 </Typography>
-                                                
+
                                                 <IconButton
                                                     onClick={() => handleQuantityChange(med._id, item.quantity, 1)}
                                                     disabled={med.stock <= item.quantity}
@@ -429,12 +487,12 @@ export default function CartPage() {
                                             <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.55)" }}>Subtotal</Typography>
                                             <Typography variant="body2" sx={{ fontWeight: 700 }}>₹{cartData.totalPrice}</Typography>
                                         </Box>
-                                        
+
                                         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                                             <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.55)" }}>Shipping</Typography>
                                             <Typography variant="body2" sx={{ color: "#4ade80", fontWeight: 700 }}>FREE</Typography>
                                         </Box>
-                                        
+
                                         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                                             <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.55)" }}>GST & Taxes</Typography>
                                             <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "12px" }}>Included</Typography>
@@ -485,9 +543,14 @@ export default function CartPage() {
             </Container>
 
             {/* Checkout Dialog */}
-            <Dialog 
-                open={openCheckout} 
-                onClose={() => !placingOrder && setOpenCheckout(false)}
+            <Dialog
+                open={openCheckout}
+                onClose={() => {
+                    if (!placingOrder) {
+                        setOpenCheckout(false);
+                        setShowAddAddressForm(addresses.length === 0);
+                    }
+                }}
                 sx={{
                     "& .MuiDialog-paper": {
                         backgroundColor: "#0f172a !important",
@@ -501,109 +564,252 @@ export default function CartPage() {
                 }}
             >
                 <DialogTitle sx={{ fontWeight: 800, fontSize: "1.4rem", pb: 1 }}>
-                    Shipping Details
+                    {showAddAddressForm ? "Shipping Details" : "Select Delivery Address"}
                 </DialogTitle>
                 <DialogContent>
-                    <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.5)", mb: 3 }}>
-                        Please enter your delivery address to place your Cash on Delivery (COD) order.
-                    </Typography>
-                    
-                    <Box component="form" onSubmit={handleConfirmOrder} sx={{ display: "flex", flexDirection: "column", gap: 2.5, mt: 1 }}>
-                        <TextField
-                            label="Address Line 1 *"
-                            variant="outlined"
-                            fullWidth
-                            value={addressLine1}
-                            onChange={(e) => setAddressLine1(e.target.value)}
-                            required
-                            disabled={placingOrder}
-                            InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
-                            inputProps={{ style: { color: "#ffffff" } }}
-                            sx={{
-                                "& .MuiOutlinedInput-root": {
-                                    "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
-                                    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
-                                    "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
-                                }
-                            }}
-                        />
-                        <TextField
-                            label="Address Line 2 (Optional)"
-                            variant="outlined"
-                            fullWidth
-                            value={addressLine2}
-                            onChange={(e) => setAddressLine2(e.target.value)}
-                            disabled={placingOrder}
-                            InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
-                            inputProps={{ style: { color: "#ffffff" } }}
-                            sx={{
-                                "& .MuiOutlinedInput-root": {
-                                    "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
-                                    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
-                                    "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
-                                }
-                            }}
-                        />
-                        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-                            <TextField
-                                label="City *"
-                                variant="outlined"
-                                value={city}
-                                onChange={(e) => setCity(e.target.value)}
-                                required
-                                disabled={placingOrder}
-                                InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
-                                inputProps={{ style: { color: "#ffffff" } }}
-                                sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
-                                        "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
-                                        "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
-                                    }
-                                }}
-                            />
-                            <TextField
-                                label="State *"
-                                variant="outlined"
-                                value={state}
-                                onChange={(e) => setState(e.target.value)}
-                                required
-                                disabled={placingOrder}
-                                InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
-                                inputProps={{ style: { color: "#ffffff" } }}
-                                sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
-                                        "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
-                                        "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
-                                    }
-                                }}
-                            />
+                    {loadingAddresses ? (
+                        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                            <CircularProgress sx={{ color: "#3b82f6" }} />
                         </Box>
-                        <TextField
-                            label="Pincode (6-Digits) *"
-                            variant="outlined"
-                            fullWidth
-                            value={pincode}
-                            onChange={(e) => setPincode(e.target.value)}
-                            required
-                            disabled={placingOrder}
-                            placeholder="e.g. 226001"
-                            InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
-                            inputProps={{ style: { color: "#ffffff" }, maxLength: 6 }}
-                            sx={{
-                                "& .MuiOutlinedInput-root": {
-                                    "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
-                                    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
-                                    "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
-                                }
-                            }}
-                        />
-                    </Box>
+                    ) : !showAddAddressForm && addresses.length > 0 ? (
+                        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+                            <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.5)", mb: 1 }}>
+                                Select a delivery address to place your Cash on Delivery (COD) order.
+                            </Typography>
+
+                            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, maxHeight: "300px", overflowY: "auto", pr: 1 }}>
+                                {addresses.map((addr) => {
+                                    const isSelected = selectedAddressId === addr._id;
+                                    return (
+                                        <Box
+                                            key={addr._id}
+                                            id={`address-card-${addr._id}`}
+                                            onClick={() => setSelectedAddressId(addr._id)}
+                                            sx={{
+                                                p: 2.5,
+                                                borderRadius: "16px",
+                                                border: isSelected ? "2px solid #3b82f6" : "1px solid rgba(255, 255, 255, 0.08)",
+                                                backgroundColor: isSelected ? "rgba(59, 130, 246, 0.08)" : "rgba(15, 23, 42, 0.6)",
+                                                cursor: "pointer",
+                                                position: "relative",
+                                                transition: "all 0.2s ease",
+                                                "&:hover": {
+                                                    borderColor: isSelected ? "#3b82f6" : "rgba(255, 255, 255, 0.2)",
+                                                    backgroundColor: isSelected ? "rgba(59, 130, 246, 0.12)" : "rgba(15, 23, 42, 0.8)"
+                                                }
+                                            }}
+                                        >
+                                            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+                                                <MapPin size={18} className={isSelected ? "text-blue-400" : "text-slate-400"} style={{ marginTop: "2px" }} />
+                                                <Box sx={{ flexGrow: 1, pr: 6 }}>
+                                                    <Typography variant="body2" sx={{ fontWeight: 700, color: "#ffffff", fontSize: "0.95rem" }}>
+                                                        {addr.addressLine1}
+                                                    </Typography>
+                                                    {addr.addressLine2 && (
+                                                        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.6)", mt: 0.5, fontSize: "0.85rem" }}>
+                                                            {addr.addressLine2}
+                                                        </Typography>
+                                                    )}
+                                                    <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.45)", mt: 0.5, fontSize: "0.85rem" }}>
+                                                        {addr.city}, {addr.state} - {addr.pincode}
+                                                    </Typography>
+                                                </Box>
+                                                {isSelected && (
+                                                    <Box sx={{
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        width: 20,
+                                                        height: 20,
+                                                        borderRadius: "50%",
+                                                        backgroundColor: "#3b82f6",
+                                                        color: "#ffffff"
+                                                    }}>
+                                                        <Check size={12} strokeWidth={3} />
+                                                    </Box>
+                                                )}
+                                            </Box>
+                                            {addr.selected && (
+                                                <span style={{
+                                                    position: "absolute",
+                                                    top: "12px",
+                                                    right: isSelected ? "36px" : "12px",
+                                                    fontSize: "9px",
+                                                    padding: "2px 6px",
+                                                    backgroundColor: "rgba(74, 222, 128, 0.15)",
+                                                    border: "1px solid rgba(74, 222, 128, 0.3)",
+                                                    borderRadius: "4px",
+                                                    color: "#4ade80",
+                                                    fontWeight: 700,
+                                                    textTransform: "uppercase"
+                                                }}>
+                                                    Default
+                                                </span>
+                                            )}
+                                        </Box>
+                                    );
+                                })}
+                            </Box>
+
+                            <Button
+                                fullWidth
+                                variant="outlined"
+                                id="btn-add-new-address"
+                                startIcon={<Plus size={16} />}
+                                onClick={() => {
+                                    setAddressLine1("");
+                                    setAddressLine2("");
+                                    setCity("");
+                                    setState("");
+                                    setPincode("");
+                                    setShowAddAddressForm(true);
+                                }}
+                                sx={{
+                                    mt: 1,
+                                    borderColor: "rgba(255, 255, 255, 0.12)",
+                                    color: "rgba(255, 255, 255, 0.7)",
+                                    textTransform: "none",
+                                    fontWeight: 600,
+                                    borderRadius: "12px",
+                                    py: 1.5,
+                                    "&:hover": {
+                                        borderColor: "#3b82f6",
+                                        color: "#3b82f6",
+                                        backgroundColor: "rgba(59, 130, 246, 0.05)"
+                                    }
+                                }}
+                            >
+                                Add New Address
+                            </Button>
+                        </Box>
+                    ) : (
+                        <Box sx={{ display: "flex", flexDirection: "column", mt: 1 }}>
+                            {addresses.length > 0 && (
+                                <Button
+                                    startIcon={<ArrowLeft size={16} />}
+                                    onClick={() => setShowAddAddressForm(false)}
+                                    id="btn-back-to-addresses"
+                                    sx={{
+                                        color: "rgba(255, 255, 255, 0.6)",
+                                        textTransform: "none",
+                                        fontWeight: 600,
+                                        mb: 3,
+                                        alignSelf: "flex-start",
+                                        "&:hover": {
+                                            color: "#ffffff",
+                                            backgroundColor: "rgba(255, 255, 255, 0.05)"
+                                        }
+                                    }}
+                                >
+                                    Back to Saved Addresses
+                                </Button>
+                            )}
+
+                            <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.5)", mb: 3 }}>
+                                Please enter your delivery address to place your Cash on Delivery (COD) order.
+                            </Typography>
+
+                            <Box component="form" onSubmit={handleConfirmOrder} sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+                                <TextField
+                                    label="Address Line 1 *"
+                                    variant="outlined"
+                                    fullWidth
+                                    value={addressLine1}
+                                    onChange={(e) => setAddressLine1(e.target.value)}
+                                    required
+                                    disabled={placingOrder}
+                                    InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
+                                    inputProps={{ style: { color: "#ffffff" } }}
+                                    sx={{
+                                        "& .MuiOutlinedInput-root": {
+                                            "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
+                                            "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                                            "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
+                                        }
+                                    }}
+                                />
+                                <TextField
+                                    label="Address Line 2 (Optional)"
+                                    variant="outlined"
+                                    fullWidth
+                                    value={addressLine2}
+                                    onChange={(e) => setAddressLine2(e.target.value)}
+                                    disabled={placingOrder}
+                                    InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
+                                    inputProps={{ style: { color: "#ffffff" } }}
+                                    sx={{
+                                        "& .MuiOutlinedInput-root": {
+                                            "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
+                                            "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                                            "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
+                                        }
+                                    }}
+                                />
+                                <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                                    <TextField
+                                        label="City *"
+                                        variant="outlined"
+                                        value={city}
+                                        onChange={(e) => setCity(e.target.value)}
+                                        required
+                                        disabled={placingOrder}
+                                        InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
+                                        inputProps={{ style: { color: "#ffffff" } }}
+                                        sx={{
+                                            "& .MuiOutlinedInput-root": {
+                                                "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
+                                                "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                                                "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
+                                            }
+                                        }}
+                                    />
+                                    <TextField
+                                        label="State *"
+                                        variant="outlined"
+                                        value={state}
+                                        onChange={(e) => setState(e.target.value)}
+                                        required
+                                        disabled={placingOrder}
+                                        InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
+                                        inputProps={{ style: { color: "#ffffff" } }}
+                                        sx={{
+                                            "& .MuiOutlinedInput-root": {
+                                                "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
+                                                "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                                                "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
+                                            }
+                                        }}
+                                    />
+                                </Box>
+                                <TextField
+                                    label="Pincode (6-Digits) *"
+                                    variant="outlined"
+                                    fullWidth
+                                    value={pincode}
+                                    onChange={(e) => setPincode(e.target.value)}
+                                    required
+                                    disabled={placingOrder}
+                                    placeholder="e.g. 226001"
+                                    InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
+                                    inputProps={{ style: { color: "#ffffff" }, maxLength: 6 }}
+                                    sx={{
+                                        "& .MuiOutlinedInput-root": {
+                                            "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
+                                            "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                                            "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
+                                        }
+                                    }}
+                                />
+                            </Box>
+                        </Box>
+                    )}
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
-                    <Button 
-                        onClick={() => setOpenCheckout(false)} 
+                    <Button
+                        onClick={() => {
+                            setOpenCheckout(false);
+                            setShowAddAddressForm(addresses.length === 0);
+                        }}
                         disabled={placingOrder}
                         sx={{
                             color: "rgba(255,255,255,0.6)",
@@ -614,9 +820,9 @@ export default function CartPage() {
                     >
                         Cancel
                     </Button>
-                    <Button 
-                        onClick={handleConfirmOrder} 
-                        disabled={placingOrder}
+                    <Button
+                        onClick={handleConfirmOrder}
+                        disabled={placingOrder || (loadingAddresses && !showAddAddressForm) || (!showAddAddressForm && !selectedAddressId)}
                         variant="contained"
                         sx={{
                             background: "linear-gradient(to right, #3b82f6, #4ade80)",
@@ -630,7 +836,7 @@ export default function CartPage() {
                             }
                         }}
                     >
-                        {placingOrder ? "Placing Order..." : "Confirm & Place Order"}
+                        {placingOrder ? "Placing Order..." : (showAddAddressForm ? "Confirm & Place Order" : "Place Order")}
                     </Button>
                 </DialogActions>
             </Dialog>
