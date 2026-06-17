@@ -16,12 +16,22 @@ import Collapse from "@mui/material/Collapse";
 import navbarData from "../../data/navbar-list.json";
 import { useAuth } from "../../services/authService/AuthContext";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Navbar() {
     const { user, logout, loading } = useAuth();
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const [openSubmenu, setOpenSubmenu] = useState(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return null;
+    }
 
     // Hide navbar on login and signup pages
     if (pathname === "/dashboard/login" || pathname === "/dashboard/signup") {
