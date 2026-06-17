@@ -35,6 +35,17 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Remove default focus outline/border on mouse clicks, keeping it for keyboard users */
+  :focus:not(:focus-visible) {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Hide the blinking text cursor (caret) on non-editable elements on click (fixes browser Caret Browsing caret) */
+  *:not(input):not(textarea):not([contenteditable]):not([contenteditable="true"]) {
+    caret-color: transparent !important;
+  }
+
   * {
     box-sizing: border-box;
     padding: 0;
@@ -55,11 +66,13 @@
 
 /* Custom class to ensure top padding clears the floating global navbar */
 .medicines-page-container {
-  padding-top: 144px !important; /* pt-36 */
+  padding-top: 144px !important;
+  /* pt-36 */
 }
 
 @media (min-width: 768px) {
   .medicines-page-container {
-    padding-top: 160px !important; /* pt-40 */
+    padding-top: 160px !important;
+    /* pt-40 */
   }
 }

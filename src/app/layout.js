@@ -24,19 +24,19 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} data-scroll-behavior="smooth">
       <body>
         <AuthProvider>
-          <Toaster 
-            position="top-right" 
-            toastOptions={{ 
-              duration: 3000, 
-              style: { 
-                background: "#0f172a", 
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                background: "#0f172a",
                 color: "#ffffff",
                 border: "1px solid rgba(255, 255, 255, 0.08)",
                 borderRadius: "12px",
                 fontFamily: "Inter, sans-serif",
                 fontSize: "14px"
-              } 
-            }} 
+              }
+            }}
           />
           <Navbar />
           {children}

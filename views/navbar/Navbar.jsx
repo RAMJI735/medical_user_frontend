@@ -25,6 +25,10 @@ export default function Navbar() {
     const [openSubmenu, setOpenSubmenu] = useState(null);
     const [mounted, setMounted] = useState(false);
 
+    // MUI Menu State
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [activeMenu, setActiveMenu] = useState(null);
+
     useEffect(() => {
         setMounted(true);
     }, []);
@@ -37,10 +41,6 @@ export default function Navbar() {
     if (pathname === "/dashboard/login" || pathname === "/dashboard/signup") {
         return null;
     }
-
-    // MUI Menu State
-    const [anchorEl, setAnchorEl] = useState(null);
-    const [activeMenu, setActiveMenu] = useState(null);
 
     const handleOpenMenu = (event, menuLabel) => {
         setAnchorEl(event.currentTarget);
