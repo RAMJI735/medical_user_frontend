@@ -21,6 +21,16 @@ export const CartService = {
         }
     },
 
+    getCartSummary: async () => {
+        try {
+            const res = await api.get("/cart/summary");
+            return res.data;
+        } catch (error) {
+            console.error("CartService getCartSummary error:", error);
+            throw error;
+        }
+    },
+
     updateCartItem: async (medicineId, quantity) => {
         try {
             const res = await api.put(`/cart/${medicineId}`, { quantity });

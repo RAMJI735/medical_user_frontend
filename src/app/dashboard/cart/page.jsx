@@ -16,7 +16,12 @@ import {
     Tooltip,
     Divider,
     Card,
-    CardContent
+    CardContent,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField
 } from "@mui/material";
 import {
     ShoppingCart,
@@ -29,6 +34,8 @@ import {
     ShoppingBag,
     Pill
 } from "lucide-react";
+import { AddressService } from "../../../../services/addressService/addressService";
+import { OrderService } from "../../../../services/orderService/orderService";
 
 export default function CartPage() {
     const router = useRouter();
@@ -36,6 +43,15 @@ export default function CartPage() {
     const [cartData, setCartData] = useState({ cartItems: [], totalItems: 0, totalPrice: 0 });
     const [loading, setLoading] = useState(true);
     const [updatingIds, setUpdatingIds] = useState({});
+    
+    // Checkout states
+    const [openCheckout, setOpenCheckout] = useState(false);
+    const [addressLine1, setAddressLine1] = useState("");
+    const [addressLine2, setAddressLine2] = useState("");
+    const [city, setCity] = useState("");
+    const [state, setState] = useState("");
+    const [pincode, setPincode] = useState("");
+    const [placingOrder, setPlacingOrder] = useState(false);
 
     const fetchCart = async () => {
         try {
@@ -107,6 +123,62 @@ export default function CartPage() {
             toast.error(error.response?.data?.message || "Failed to clear cart");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleConfirmOrder = async (e) => {
+        if (e) e.preventDefault();
+        if (!addressLine1 || !city || !state || !pincode) {
+            toast.error("Please fill in all required address fields.");
+            return;
+        }
+        if (!/^\d{6}$/.test(pincode)) {
+            toast.error("Pincode must be a 6-digit number.");
+            return;
+        }
+
+        setPlacingOrder(true);
+        try {
+            // 1. Create Address
+            const addressRes = await AddressService.createAddress({
+                addressLine1,
+                addressLine2,
+                city,
+                state,
+                pincode
+            });
+            
+            const addressId = addressRes.address?._id || addressRes.data?.address?._id || addressRes._id;
+            if (!addressId) {
+                throw new Error("Failed to get created address ID");
+            }
+
+            // 2. Create Order
+            await OrderService.createOrder({
+                addressId,
+                paymentMethod: "COD"
+            });
+
+            toast.success("Order placed successfully!", { icon: "🎉" });
+            setOpenCheckout(false);
+            
+            // Reset fields
+            setAddressLine1("");
+            setAddressLine2("");
+            setCity("");
+            setState("");
+            setPincode("");
+
+            // Re-fetch cart (which should now be empty)
+            await fetchCart();
+
+            // Redirect to orders page
+            router.push("/dashboard/orders");
+        } catch (error) {
+            console.error("Failed to place order:", error);
+            toast.error(error.response?.data?.message || "Failed to place order. Please try again.");
+        } finally {
+            setPlacingOrder(false);
         }
     };
 
@@ -394,7 +466,7 @@ export default function CartPage() {
                                                 boxShadow: "0 6px 20px rgba(34, 197, 94, 0.4)"
                                             }
                                         }}
-                                        onClick={() => toast("Checkout integration coming soon!", { icon: "💳" })}
+                                        onClick={() => setOpenCheckout(true)}
                                     >
                                         Proceed to Checkout
                                     </Button>
@@ -411,6 +483,157 @@ export default function CartPage() {
                     </Box>
                 )}
             </Container>
+
+            {/* Checkout Dialog */}
+            <Dialog 
+                open={openCheckout} 
+                onClose={() => !placingOrder && setOpenCheckout(false)}
+                sx={{
+                    "& .MuiDialog-paper": {
+                        backgroundColor: "#0f172a !important",
+                        color: "#ffffff !important",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        borderRadius: "20px",
+                        padding: 2,
+                        maxWidth: "500px",
+                        width: "100%"
+                    }
+                }}
+            >
+                <DialogTitle sx={{ fontWeight: 800, fontSize: "1.4rem", pb: 1 }}>
+                    Shipping Details
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.5)", mb: 3 }}>
+                        Please enter your delivery address to place your Cash on Delivery (COD) order.
+                    </Typography>
+                    
+                    <Box component="form" onSubmit={handleConfirmOrder} sx={{ display: "flex", flexDirection: "column", gap: 2.5, mt: 1 }}>
+                        <TextField
+                            label="Address Line 1 *"
+                            variant="outlined"
+                            fullWidth
+                            value={addressLine1}
+                            onChange={(e) => setAddressLine1(e.target.value)}
+                            required
+                            disabled={placingOrder}
+                            InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
+                            inputProps={{ style: { color: "#ffffff" } }}
+                            sx={{
+                                "& .MuiOutlinedInput-root": {
+                                    "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
+                                    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                                    "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
+                                }
+                            }}
+                        />
+                        <TextField
+                            label="Address Line 2 (Optional)"
+                            variant="outlined"
+                            fullWidth
+                            value={addressLine2}
+                            onChange={(e) => setAddressLine2(e.target.value)}
+                            disabled={placingOrder}
+                            InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
+                            inputProps={{ style: { color: "#ffffff" } }}
+                            sx={{
+                                "& .MuiOutlinedInput-root": {
+                                    "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
+                                    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                                    "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
+                                }
+                            }}
+                        />
+                        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+                            <TextField
+                                label="City *"
+                                variant="outlined"
+                                value={city}
+                                onChange={(e) => setCity(e.target.value)}
+                                required
+                                disabled={placingOrder}
+                                InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
+                                inputProps={{ style: { color: "#ffffff" } }}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
+                                        "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                                        "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
+                                    }
+                                }}
+                            />
+                            <TextField
+                                label="State *"
+                                variant="outlined"
+                                value={state}
+                                onChange={(e) => setState(e.target.value)}
+                                required
+                                disabled={placingOrder}
+                                InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
+                                inputProps={{ style: { color: "#ffffff" } }}
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
+                                        "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                                        "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
+                                    }
+                                }}
+                            />
+                        </Box>
+                        <TextField
+                            label="Pincode (6-Digits) *"
+                            variant="outlined"
+                            fullWidth
+                            value={pincode}
+                            onChange={(e) => setPincode(e.target.value)}
+                            required
+                            disabled={placingOrder}
+                            placeholder="e.g. 226001"
+                            InputLabelProps={{ style: { color: "rgba(255,255,255,0.4)" } }}
+                            inputProps={{ style: { color: "#ffffff" }, maxLength: 6 }}
+                            sx={{
+                                "& .MuiOutlinedInput-root": {
+                                    "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
+                                    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.2)" },
+                                    "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
+                                }
+                            }}
+                        />
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
+                    <Button 
+                        onClick={() => setOpenCheckout(false)} 
+                        disabled={placingOrder}
+                        sx={{
+                            color: "rgba(255,255,255,0.6)",
+                            textTransform: "none",
+                            fontWeight: 600,
+                            "&:hover": { color: "#ffffff", backgroundColor: "rgba(255,255,255,0.05)" }
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button 
+                        onClick={handleConfirmOrder} 
+                        disabled={placingOrder}
+                        variant="contained"
+                        sx={{
+                            background: "linear-gradient(to right, #3b82f6, #4ade80)",
+                            textTransform: "none",
+                            fontWeight: 700,
+                            px: 3,
+                            borderRadius: "10px",
+                            boxShadow: "0 4px 12px rgba(59, 130, 246, 0.2)",
+                            "&:hover": {
+                                background: "linear-gradient(to right, #2563eb, #22c55e)"
+                            }
+                        }}
+                    >
+                        {placingOrder ? "Placing Order..." : "Confirm & Place Order"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

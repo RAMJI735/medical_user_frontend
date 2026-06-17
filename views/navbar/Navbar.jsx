@@ -15,11 +15,18 @@ import ListItemText from "@mui/material/ListItemText";
 import Collapse from "@mui/material/Collapse";
 import navbarData from "../../data/navbar-list.json";
 import { useAuth } from "../../services/authService/AuthContext";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
     const { user, logout, loading } = useAuth();
+    const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const [openSubmenu, setOpenSubmenu] = useState(null);
+
+    // Hide navbar on login and signup pages
+    if (pathname === "/dashboard/login" || pathname === "/dashboard/signup") {
+        return null;
+    }
 
     // MUI Menu State
     const [anchorEl, setAnchorEl] = useState(null);

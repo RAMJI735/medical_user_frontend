@@ -20,10 +20,24 @@ function Index() {
     const [addedMeds, setAddedMeds] = useState({})
     const [favorites, setFavorites] = useState({})
     const [mounted, setMounted] = useState(false)
+    const [cartItems, setCartItems] = useState([])
 
     useEffect(() => {
         setMounted(true)
     }, [])
+
+    useEffect(() => {
+        if (!mounted || !user) return;
+        async function fetchCartSummary() {
+            try {
+                const data = await CartService.getCartSummary();
+                setCartItems(data || []);
+            } catch (err) {
+                console.error("Failed to load cart summary:", err);
+            }
+        }
+        fetchCartSummary();
+    }, [user, mounted]);
 
     useEffect(() => {
         if (!mounted) return;
@@ -60,6 +74,10 @@ function Index() {
             setTimeout(() => {
                 setAddedMeds(prev => ({ ...prev, [medId]: false }))
             }, 1500)
+            
+            // Refresh cart items summary
+            const data = await CartService.getCartSummary();
+            setCartItems(data || []);
         } catch (error) {
             console.error("Failed to add to cart:", error);
             toast.error(error.response?.data?.message || "Failed to add item to cart.");
@@ -78,6 +96,8 @@ function Index() {
             }
         });
     }
+
+    const cartCount = cartItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
     if (!mounted) {
         return (
@@ -108,10 +128,15 @@ function Index() {
                     {/* View Cart Button */}
                     <Link 
                         href="/dashboard/cart"
-                        className="flex items-center gap-2 bg-[#0f172a]/80 hover:bg-[#1e293b]/80 text-white border border-white/10 hover:border-blue-500/40 px-5 py-3 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-blue-500/10 hover:-translate-y-0.5"
+                        className="relative flex items-center gap-2 bg-[#0f172a]/80 hover:bg-[#1e293b]/80 text-white border border-white/10 hover:border-blue-500/40 px-5 py-3 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-blue-500/10 hover:-translate-y-0.5"
                     >
                         <ShoppingCart className="w-5 h-5 text-blue-400" />
                         <span>View Cart</span>
+                        {cartCount > 0 && (
+                            <span className="flex items-center justify-center bg-blue-500 text-white text-xs font-bold rounded-full h-5 min-w-[20px] px-1.5 ml-1 animate-pulse">
+                                {cartCount}
+                            </span>
+                        )}
                     </Link>
                 </div>
                 
@@ -140,6 +165,12 @@ function Index() {
                         {medicines.map((med) => {
                             const isAdded = addedMeds[med._id];
                             const isFav = favorites[med._id];
+                            const isInCart = cartItems.some(item => {
+                                const itemId = typeof item.medicineId === 'object' && item.medicineId !== null 
+                                    ? item.medicineId._id 
+                                    : item.medicineId;
+                                return String(itemId) === String(med._id);
+                            });
                             
                             // 1. Dynamic pricing resolution (sellingPrice is the primary API field)
                             const price = typeof med.sellingPrice === 'number' 
@@ -276,13 +307,21 @@ function Index() {
                                         </div>
 
                                         <button
-                                            onClick={() => handleAddToCart(med._id)}
-                                            disabled={med.stock <= 0 || isExpired}
+                                            onClick={() => {
+                                                if (isInCart) {
+                                                    router.push('/dashboard/cart');
+                                                } else {
+                                                    handleAddToCart(med._id);
+                                                }
+                                            }}
+                                            disabled={(med.stock <= 0 || isExpired) && !isInCart}
                                             className={`w-full mt-5 text-white py-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 ${
                                                 isExpired
                                                     ? "bg-red-950/20 text-red-700 cursor-not-allowed border border-red-900/20"
-                                                    : med.stock <= 0
+                                                    : med.stock <= 0 && !isInCart
                                                     ? "bg-slate-800 text-slate-600 cursor-not-allowed border border-white/5"
+                                                    : isInCart
+                                                    ? "bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/35 hover:scale-[1.01]"
                                                     : isAdded
                                                     ? "bg-emerald-600 shadow-lg shadow-emerald-500/20"
                                                     : "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/35 hover:scale-[1.01]"
@@ -291,8 +330,10 @@ function Index() {
                                             <ShoppingCart className="w-4 h-4" />
                                             {isExpired 
                                                 ? "Expired / Restrict" 
-                                                : med.stock <= 0 
+                                                : med.stock <= 0 && !isInCart
                                                 ? "Out of Stock" 
+                                                : isInCart 
+                                                ? "Go to Cart"
                                                 : isAdded 
                                                 ? "Added to Cart!" 
                                                 : "Add To Cart"
