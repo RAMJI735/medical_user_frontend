@@ -71,7 +71,7 @@ export default function CategoriesList() {
                 {loading ? (
                     <Grid container spacing={3}>
                         {[1, 2, 3, 4].map((i) => (
-                            <Grid item xs={12} sm={6} md={3} key={i}>
+                            <Grid xs={12} sm={6} md={3} key={i}>
                                 <Skeleton
                                     variant="rectangular"
                                     height={200}
@@ -87,7 +87,7 @@ export default function CategoriesList() {
                 ) : (
                     <Grid container spacing={3}>
                         {categories.map((cat) => (
-                            <Grid item xs={12} sm={6} md={3} key={cat._id}>
+                            <Grid xs={12} sm={6} md={3} key={cat._id}>
                                 <Link href={`/dashboard/medicine?category=${cat._id}`} style={{ textDecoration: "none" }}>
                                     <Card
                                         sx={{

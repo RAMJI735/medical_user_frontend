@@ -1,6 +1,5 @@
 "use client";
 
-import Navbar from "../../../../views/navbar/Navbar";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
@@ -20,8 +19,6 @@ const servicesData = [
 export default function ServicesPage() { 
   return (
     <Box component="main" sx={{ minHeight: "100vh", backgroundColor: "#020617", color: "#ffffff", pt: 14, overflowX: "hidden" }}>
-      {/* Navbar */}
-      <Navbar />
 
       <Box component="section" id="services" sx={{ py: 10 }}>
         <Container maxWidth="lg">
@@ -55,7 +52,7 @@ export default function ServicesPage() {
 
           <Grid container spacing={4}>
             {servicesData.map((service) => (
-              <Grid item xs={12} sm={6} md={4} key={service.id}>
+              <Grid xs={12} sm={6} md={4} key={service.id}>
                 <Card
                   sx={{
                     height: "100%",

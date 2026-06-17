@@ -180,7 +180,7 @@ export default function MedicalCategoriesPage() {
                 {loading ? (
                     <Grid container spacing={3.5}>
                         {[1, 2, 3, 4, 5, 6].map((i) => (
-                            <Grid item xs={12} sm={6} md={4} key={i}>
+                            <Grid xs={12} sm={6} md={4} key={i}>
                                 <Skeleton 
                                     variant="rectangular" 
                                     height={240} 
@@ -210,7 +210,7 @@ export default function MedicalCategoriesPage() {
                 ) : (
                     <Grid container spacing={3.5}>
                         {categories.map((cat) => (
-                            <Grid item xs={12} sm={6} md={4} key={cat._id}>
+                            <Grid xs={12} sm={6} md={4} key={cat._id}>
                                 <Card
                                     sx={{
                                         height: "100%",
