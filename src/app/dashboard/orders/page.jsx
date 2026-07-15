@@ -20,7 +20,9 @@ import {
     DialogContent,
     DialogActions,
     Grid,
-    Paper
+    Paper,
+    IconButton,
+    Tooltip
 } from "@mui/material";
 import {
     ShoppingBag,
@@ -33,7 +35,8 @@ import {
     Truck,
     CheckCircle2,
     XCircle,
-    FileText
+    FileText,
+    Trash2
 } from "lucide-react";
 
 export default function OrdersPage() {
@@ -47,6 +50,7 @@ export default function OrdersPage() {
     const [modalLoading, setModalLoading] = useState(false);
     const [openDetails, setOpenDetails] = useState(false);
     const [cancellingId, setCancellingId] = useState(null);
+    const [hidingId, setHidingId] = useState(null);
 
     const fetchOrders = async () => {
         try {
@@ -108,6 +112,30 @@ export default function OrdersPage() {
             toast.error(error.response?.data?.message || "Failed to cancel order");
         } finally {
             setCancellingId(null);
+        }
+    };
+
+    const handleHideOrder = async (orderId) => {
+        if (!confirm("Are you sure you want to delete this order from your history?")) return;
+
+        setHidingId(orderId);
+        try {
+            await OrderService.hideOrder(orderId);
+            toast.success("Order deleted from history");
+            
+            // Refresh list
+            const updatedOrders = await OrderService.getOrders();
+            setOrders(updatedOrders || []);
+            
+            // Close details if open
+            if (selectedOrder && selectedOrder._id === orderId) {
+                setOpenDetails(false);
+            }
+        } catch (error) {
+            console.error("Failed to delete order:", error);
+            toast.error(error.response?.data?.message || "Failed to delete order");
+        } finally {
+            setHidingId(null);
         }
     };
 
@@ -354,6 +382,25 @@ export default function OrdersPage() {
                                                                 {cancellingId === order._id ? "Cancelling..." : "Cancel"}
                                                             </Button>
                                                         )}
+                                                        <Tooltip title="Delete from history">
+                                                            <IconButton
+                                                                onClick={() => handleHideOrder(order._id)}
+                                                                disabled={hidingId === order._id}
+                                                                sx={{
+                                                                    color: "rgba(255, 255, 255, 0.4)",
+                                                                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                                                                    borderRadius: "10px",
+                                                                    p: 1,
+                                                                    "&:hover": {
+                                                                        color: "#ef4444",
+                                                                        borderColor: "rgba(239, 68, 68, 0.3)",
+                                                                        backgroundColor: "rgba(239, 68, 68, 0.05)"
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Trash2 size={18} />
+                                                            </IconButton>
+                                                        </Tooltip>
                                                     </Box>
                                                 </Box>
                                             </Box>
@@ -517,14 +564,27 @@ export default function OrdersPage() {
                                         
                                         {selectedOrder.addressId ? (
                                             <Box sx={{ fontSize: "13px", lineHeight: 1.6 }}>
-                                                <Typography sx={{ fontWeight: 700, mb: 0.5 }}>{user?.name}</Typography>
-                                                <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>{selectedOrder.addressId.addressLine1}</Typography>
-                                                {selectedOrder.addressId.addressLine2 && (
-                                                    <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>{selectedOrder.addressId.addressLine2}</Typography>
-                                                )}
-                                                <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
-                                                    {selectedOrder.addressId.city}, {selectedOrder.addressId.state} - {selectedOrder.addressId.pincode}
-                                                </Typography>
+                                                {(() => {
+                                                    try {
+                                                        const addr = typeof selectedOrder.addressId === "string" 
+                                                            ? JSON.parse(selectedOrder.addressId) 
+                                                            : selectedOrder.addressId;
+                                                        return (
+                                                            <>
+                                                                <Typography sx={{ fontWeight: 700, mb: 0.5 }}>{user?.name}</Typography>
+                                                                <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>{addr.addressLine1}</Typography>
+                                                                {addr.addressLine2 && (
+                                                                    <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>{addr.addressLine2}</Typography>
+                                                                )}
+                                                                <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
+                                                                    {addr.city}, {addr.state} - {addr.pincode}
+                                                                </Typography>
+                                                            </>
+                                                        );
+                                                    } catch (e) {
+                                                        return <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>{String(selectedOrder.addressId)}</Typography>;
+                                                    }
+                                                })()}
                                             </Box>
                                         ) : (
                                             <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.4)" }}>No address record populated</Typography>
@@ -577,6 +637,15 @@ export default function OrdersPage() {
                         </DialogContent>
                         
                         <DialogActions sx={{ p: 2, pt: 1, borderTop: "1px solid rgba(255,255,255,0.06)", mt: 2, gap: 1 }}>
+                            <Button
+                                onClick={() => handleHideOrder(selectedOrder._id)}
+                                disabled={hidingId === selectedOrder._id}
+                                color="error"
+                                sx={{ textTransform: "none", fontWeight: 600, mr: "auto", color: "rgba(239,68,68,0.7)", "&:hover": { color: "#ef4444", backgroundColor: "rgba(239,68,68,0.1)" } }}
+                                startIcon={<Trash2 size={16} />}
+                            >
+                                Delete
+                            </Button>
                             {selectedOrder.status === "New Orders" && (
                                 <Button
                                     onClick={() => handleCancelOrder(selectedOrder._id)}

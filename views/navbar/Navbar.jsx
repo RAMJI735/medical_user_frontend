@@ -509,7 +509,7 @@ export default function Navbar() {
                                                     },
                                                 }}
                                             >
-                                                <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: "16px", fontWeight: 500 }} />
+                                                <ListItemText primary={item.label} slotProps={{ primary: { fontSize: "16px", fontWeight: 500 } }} />
                                                 <ChevronDown
                                                     size={16}
                                                     style={{
@@ -537,7 +537,7 @@ export default function Navbar() {
                                                                     },
                                                                 }}
                                                             >
-                                                                <ListItemText primary={sub.label} primaryTypographyProps={{ fontSize: "14px", fontWeight: 400 }} />
+                                                                <ListItemText primary={sub.label} slotProps={{ primary: { fontSize: "14px", fontWeight: 400 } }} />
                                                             </ListItemButton>
                                                         </ListItem>
                                                     ))}
@@ -560,7 +560,7 @@ export default function Navbar() {
                                                 },
                                             }}
                                         >
-                                            <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: "16px", fontWeight: 500 }} />
+                                            <ListItemText primary={item.label} slotProps={{ primary: { fontSize: "16px", fontWeight: 500 } }} />
                                         </ListItemButton>
                                     )}
                                 </ListItem>

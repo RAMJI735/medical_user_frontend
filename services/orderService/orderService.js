@@ -35,5 +35,14 @@ export const OrderService = {
         } catch (error) {
             throw error;
         }
+    },
+
+    hideOrder: async (id) => {
+        try {
+            const res = await api.patch(`/orders/${id}/hide`);
+            return res.data;
+        } catch (error) {
+            throw error;
+        }
     }
 };
