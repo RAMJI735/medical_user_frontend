@@ -134,14 +134,16 @@ export default function BannerCarousel() {
       sx={{
         position: "relative",
         width: "100%",
-        minHeight: "90vh",
+        minHeight: { xs: "70vh", sm: "80vh", md: "90vh" },
         display: "flex",
         flexDirection: "column",
-        justifyContent: "flex-end",
+        justifyContent: { xs: "center", md: "flex-end" },
         alignItems: "center",
-        pb: 14,
-        px: 3,
+        pt: { xs: 8, sm: 10, md: 0 },
+        pb: { xs: 6, sm: 8, md: 14 },
+        px: { xs: 2, sm: 3 },
         overflow: "hidden",
+        boxSizing: "border-box",
       }}
     >
       {/* Background Slides */}
@@ -180,6 +182,8 @@ export default function BannerCarousel() {
           zIndex: 10,
           textAlign: "center",
           color: "#ffffff",
+          px: { xs: 1, sm: 2, md: 3 },
+          width: "100%",
         }}
       >
         {/* Render text inside a wrapper keyed by activeIndex to re-trigger transition animation on slide change */}
@@ -188,14 +192,16 @@ export default function BannerCarousel() {
             variant="h1"
             sx={{
               color: "rgba(255, 255, 255, 0.95)",
-              fontSize: { xs: "28px", sm: "40px", md: "52px" },
+              fontSize: { xs: "22px", sm: "36px", md: "52px" },
               fontWeight: 700,
               letterSpacing: "-0.01em",
-              lineHeight: 1.3,
+              lineHeight: { xs: 1.25, md: 1.3 },
               maxWidth: "800px",
               mx: "auto",
-              mb: 3,
+              mb: { xs: 1.5, sm: 2.5, md: 3 },
               textShadow: "0 2px 10px rgba(0, 0, 0, 0.85), 0 4px 20px rgba(0, 0, 0, 0.4)",
+              wordBreak: "break-word",
+              overflowWrap: "break-word",
             }}
           >
             {titleText}
@@ -206,13 +212,15 @@ export default function BannerCarousel() {
               variant="body1"
               sx={{
                 color: "rgba(255, 255, 255, 0.9)",
-                fontSize: { xs: "15px", sm: "17px", md: "19px" },
+                fontSize: { xs: "13px", sm: "16px", md: "19px" },
                 fontWeight: 500,
-                lineHeight: 1.6,
+                lineHeight: { xs: 1.5, md: 1.6 },
                 maxWidth: "600px",
                 mx: "auto",
-                mb: 4,
+                mb: { xs: 2.5, sm: 3, md: 4 },
                 textShadow: "0 2px 8px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.95)",
+                wordBreak: "break-word",
+                overflowWrap: "break-word",
               }}
             >
               {descriptionText}
@@ -229,11 +237,13 @@ export default function BannerCarousel() {
                 background: "rgba(255, 255, 255, 0.9)",
                 color: "#1e293b",
                 fontWeight: 600,
-                fontSize: "1rem",
-                padding: "0.625rem 2rem",
+                fontSize: { xs: "0.875rem", sm: "1rem" },
+                padding: { xs: "0.5rem 1.5rem", sm: "0.625rem 2rem" },
                 borderRadius: "9999px",
                 boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)",
                 transition: "all 0.3s ease",
+                maxWidth: "100%",
+                whiteSpace: "nowrap",
                 "&:hover": {
                   background: "#ffffff",
                   transform: "translateY(-2px)",
@@ -309,11 +319,11 @@ export default function BannerCarousel() {
         <Box
           sx={{
             position: "absolute",
-            bottom: 28,
+            bottom: { xs: 14, sm: 20, md: 28 },
             left: "50%",
             transform: "translateX(-50%)",
             display: "flex",
-            gap: 1.5,
+            gap: { xs: 1, sm: 1.5 },
             zIndex: 12,
           }}
         >
@@ -322,8 +332,8 @@ export default function BannerCarousel() {
               key={index}
               onClick={() => setActiveIndex(index)}
               sx={{
-                width: index === activeIndex ? 28 : 8,
-                height: 8,
+                width: index === activeIndex ? { xs: 20, sm: 28 } : { xs: 6, sm: 8 },
+                height: { xs: 6, sm: 8 },
                 borderRadius: "9999px",
                 backgroundColor: index === activeIndex ? "#ffffff" : "rgba(255, 255, 255, 0.35)",
                 cursor: "pointer",

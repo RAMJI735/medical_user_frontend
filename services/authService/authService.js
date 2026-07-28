@@ -40,5 +40,23 @@ export const AuthService = {
         } catch (error) {
             throw error;
         }
+    },
+
+    forgotPassword: async (email) => {
+        try {
+            const res = await api.post("/auth/forgot-password", { email });
+            return res.data;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    resetPassword: async ({ email, otp, resetToken, newPassword }) => {
+        try {
+            const res = await api.post("/auth/reset-password", { email, otp, resetToken, newPassword });
+            return res.data;
+        } catch (error) {
+            throw error;
+        }
     }
 };

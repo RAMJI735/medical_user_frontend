@@ -218,27 +218,43 @@ export const Login = () => {
                     />
                 </Box>
 
-                {/* Remember Me Checkbox */}
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            checked={formData.rememberMe}
-                            onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
-                            sx={{
-                                color: "rgba(255, 255, 255, 0.3)",
-                                "&.Mui-checked": {
-                                    color: "#3b82f6",
-                                },
-                            }}
-                        />
-                    }
-                    label={
-                        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.65)" }}>
-                            Remember me
-                        </Typography>
-                    }
-                    sx={{ mb: 3, alignItems: "center" }}
-                />
+                {/* Remember Me & Forgot Password Row */}
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 1 }}>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={formData.rememberMe}
+                                onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
+                                sx={{
+                                    color: "rgba(255, 255, 255, 0.3)",
+                                    "&.Mui-checked": {
+                                        color: "#3b82f6",
+                                    },
+                                }}
+                            />
+                        }
+                        label={
+                            <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.65)" }}>
+                                Remember me
+                            </Typography>
+                        }
+                        sx={{ m: 0 }}
+                    />
+
+                    <Typography
+                        variant="body2"
+                        onClick={() => router.push("/dashboard/forgot-password")}
+                        sx={{
+                            color: "#3b82f6",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            transition: "color 0.2s ease",
+                            "&:hover": { textDecoration: "underline", color: "#60a5fa" }
+                        }}
+                    >
+                        Forgot Password?
+                    </Typography>
+                </Box>
 
                 {/* Error message display */}
                 {errorMsg && (

@@ -61,11 +61,21 @@ export default function CartPage() {
     const [showAddAddressForm, setShowAddAddressForm] = useState(false);
     const [loadingAddresses, setLoadingAddresses] = useState(false);
 
+    const normalizeCartData = (data) => {
+        if (!data) return { cartItems: [], totalItems: 0, totalPrice: 0 };
+        const cart = data.cart !== undefined ? data.cart : data;
+        if (!cart) return { cartItems: [], totalItems: 0, totalPrice: 0 };
+        const cartItems = cart.medicines || data.cartItems || [];
+        const totalItems = cart.totalItems !== undefined ? cart.totalItems : (data.totalItems || 0);
+        const totalPrice = cart.totalAmount !== undefined ? cart.totalAmount : (data.totalPrice || 0);
+        return { cartItems, totalItems, totalPrice };
+    };
+
     const fetchCart = async () => {
         try {
             setLoading(true);
             const data = await CartService.getCart();
-            setCartData(data || { cartItems: [], totalItems: 0, totalPrice: 0 });
+            setCartData(normalizeCartData(data));
         } catch (error) {
             console.error("Failed to fetch cart:", error);
         } finally {
@@ -127,7 +137,7 @@ export default function CartPage() {
             await CartService.updateCartItem(medicineId, newQty);
             // Refresh cart data
             const data = await CartService.getCart();
-            setCartData(data || { cartItems: [], totalItems: 0, totalPrice: 0 });
+            setCartData(normalizeCartData(data));
         } catch (error) {
             console.error("Failed to update cart quantity:", error);
             toast.error(error.response?.data?.message || "Failed to update quantity");
@@ -144,7 +154,7 @@ export default function CartPage() {
             await CartService.removeFromCart(medicineId);
             // Refresh cart data
             const data = await CartService.getCart();
-            setCartData(data || { cartItems: [], totalItems: 0, totalPrice: 0 });
+            setCartData(normalizeCartData(data));
         } catch (error) {
             console.error("Failed to remove item:", error);
             toast.error(error.response?.data?.message || "Failed to remove item");
