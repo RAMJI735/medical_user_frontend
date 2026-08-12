@@ -18,11 +18,17 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Healthcare Expert - Digital Pharmacy & Care",
   description: "Authentic prescription medicines and daily healthcare services",
+  verification: {
+    google: "1K_6BSvbhJyx8ABDuuSgGFKL2AS5iJsej18dQo87_lw",
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
+      <head>
+        <meta name="google-site-verification" content="1K_6BSvbhJyx8ABDuuSgGFKL2AS5iJsej18dQo87_lw" />
+      </head>
       <body suppressHydrationWarning>
         <AuthProvider>
           <Toaster
