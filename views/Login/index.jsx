@@ -165,8 +165,10 @@ export const Login = () => {
                         sx={{
                             backgroundColor: "rgba(15, 23, 42, 0.8)",
                             borderRadius: "14px",
-                            "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(59, 130, 246, 0.4)" },
+                            "& .MuiInputLabel-root": { color: "rgba(255, 255, 255, 0.75)" },
+                            "& .MuiInputLabel-root.Mui-focused": { color: "#38bdf8" },
+                            "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.15)" },
+                            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(59, 130, 246, 0.5)" },
                             "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#3b82f6" }
                         }}
                     />
@@ -198,8 +200,10 @@ export const Login = () => {
                         sx={{
                             backgroundColor: "rgba(15, 23, 42, 0.8)",
                             borderRadius: "14px",
-                            "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.1)" },
-                            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(59, 130, 246, 0.4)" },
+                            "& .MuiInputLabel-root": { color: "rgba(255, 255, 255, 0.75)" },
+                            "& .MuiInputLabel-root.Mui-focused": { color: "#38bdf8" },
+                            "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.15)" },
+                            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(59, 130, 246, 0.5)" },
                             "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#3b82f6" }
                         }}
                     />
