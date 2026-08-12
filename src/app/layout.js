@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "../../services/authService/AuthContext";
 import { Toaster } from "react-hot-toast";
 import Navbar from "../../views/navbar/Navbar";
+import Footer from "../../views/footer/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Shaadi Expert",
-  description: "Wedding planning services for Lucknow couples",
+  title: "Healthcare Expert - Digital Pharmacy & Care",
+  description: "Authentic prescription medicines and daily healthcare services",
 };
 
 export default function RootLayout({ children }) {
@@ -40,8 +41,10 @@ export default function RootLayout({ children }) {
           />
           <Navbar />
           {children}
+          <Footer />
         </AuthProvider>
       </body>
     </html>
   );
 }
+

@@ -4,10 +4,6 @@ import React, { useState, useEffect } from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
-import Grid from "@mui/material/Grid";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import CardMedia from "@mui/material/CardMedia";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -20,7 +16,8 @@ import DialogActions from "@mui/material/DialogActions";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Switch from "@mui/material/Switch";
 import IconButton from "@mui/material/IconButton";
-import { Search, Plus, FolderPlus, Trash2, ShieldAlert, Sparkles, Activity } from "lucide-react";
+import Link from "next/link";
+import { Search, Plus, FolderPlus, Trash2, ShieldAlert, Sparkles, Activity, ArrowLeft } from "lucide-react";
 import { CategoryService } from "../../../../services/categoryService/categoryService";
 
 export default function MedicalCategoriesPage() {
@@ -44,7 +41,7 @@ export default function MedicalCategoriesPage() {
         setLoading(true);
         try {
             const data = await CategoryService.getAllCategories(searchQuery);
-            setCategories(data);
+            setCategories(data || []);
         } catch (error) {
             console.error("Failed to load categories:", error);
         } finally {
@@ -96,333 +93,221 @@ export default function MedicalCategoriesPage() {
     };
 
     return (
-        <Box sx={{ minHeight: "100vh", backgroundColor: "#020617", py: 6, color: "#ffffff" }}>
+        <Box sx={{ minHeight: "100vh", backgroundColor: "#020617", pt: { xs: 12, md: 14 }, pb: 10, color: "#ffffff" }}>
             <Container maxWidth="lg">
-                {/* Header Section */}
-                <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" }, gap: 3, mb: 6 }}>
+                {/* Header */}
+                <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" }, gap: 2, mb: 4 }}>
                     <Box>
-                        <Typography
-                            variant="h3"
-                            sx={{
-                                fontWeight: 800,
-                                letterSpacing: "-0.02em",
-                                background: "linear-gradient(to right, #3b82f6, #4ade80)",
-                                WebkitBackgroundClip: "text",
-                                WebkitTextFillColor: "transparent",
-                                mb: 1,
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1.5
-                            }}
-                        >
-                            <Sparkles size={36} style={{ color: "#3b82f6" }} />
-                            Medical Categories
+                        <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, px: 2, py: 0.5, borderRadius: "9999px", backgroundColor: "rgba(59, 130, 246, 0.15)", border: "1px solid rgba(59, 130, 246, 0.3)", color: "#38bdf8", fontSize: "0.85rem", fontWeight: 600, mb: 1.5 }}>
+                            <Sparkles size={16} />
+                            <span>Category Management</span>
+                        </Box>
+                        <Typography variant="h4" sx={{ fontWeight: 800, color: "#ffffff" }}>
+                            Medical Segments & Categories
                         </Typography>
-                        <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.55)" }}>
-                            Manage all category categories for medicines and healthcare services.
+                        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.6)", mt: 0.5 }}>
+                            Manage prescription drug categories, active status, and sorting order.
                         </Typography>
                     </Box>
-                    
+
                     <Button
-                        variant="contained"
                         onClick={() => setCreateDialogOpen(true)}
+                        variant="contained"
                         startIcon={<Plus size={18} />}
                         sx={{
-                            background: "linear-gradient(to right, #3b82f6, #4ade80)",
-                            py: 1.5,
+                            borderRadius: "9999px",
                             px: 3,
-                            borderRadius: "12px",
-                            fontWeight: 600,
+                            py: 1,
+                            background: "linear-gradient(to right, #3b82f6, #10b981)",
+                            fontWeight: 700,
                             textTransform: "none",
-                            boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3)",
-                            transition: "all 0.3s ease",
-                            "&:hover": {
-                                background: "linear-gradient(to right, #2563eb, #22c55e)",
-                                boxShadow: "0 6px 20px rgba(34, 197, 94, 0.4)",
-                                transform: "translateY(-2px)"
-                            }
+                            boxShadow: "0 10px 25px rgba(59, 130, 246, 0.3)",
                         }}
                     >
-                        New Category
+                        Add Category
                     </Button>
                 </Box>
 
-                {/* Filters Section */}
-                <Box sx={{ mb: 5 }}>
+                {/* Search Bar */}
+                <Box sx={{ mb: 5, maxWidth: "600px" }}>
                     <TextField
                         fullWidth
-                        placeholder="Search categories by name..."
+                        placeholder="Search medical categories..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start" sx={{ color: "rgba(255,255,255,0.4)" }}>
-                                    <Search size={20} />
-                                </InputAdornment>
-                            )
+                        slotProps={{
+                            input: {
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Search size={20} style={{ color: "rgba(255, 255, 255, 0.5)" }} />
+                                    </InputAdornment>
+                                ),
+                                style: { color: "#ffffff", fontSize: "0.95rem" }
+                            }
                         }}
                         sx={{
-                            "& .MuiOutlinedInput-root": {
-                                color: "#ffffff",
-                                backgroundColor: "rgba(15, 23, 42, 0.6)",
-                                backdropFilter: "blur(10px)",
-                                borderRadius: "14px",
-                                border: "1px solid rgba(255, 255, 255, 0.08)",
-                                "& fieldset": { borderColor: "transparent" },
-                                "&:hover fieldset": { borderColor: "transparent" },
-                                "&.Mui-focused fieldset": { borderColor: "#3b82f6" }
-                            }
+                            backgroundColor: "rgba(15, 23, 42, 0.8)",
+                            borderRadius: "16px",
+                            "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.1)" },
+                            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(59, 130, 246, 0.4)" },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#3b82f6" }
                         }}
                     />
                 </Box>
 
                 {/* Categories Grid */}
                 {loading ? (
-                    <Grid container spacing={3.5}>
+                    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }, gap: 3 }}>
                         {[1, 2, 3, 4, 5, 6].map((i) => (
-                            <Grid xs={12} sm={6} md={4} key={i}>
-                                <Skeleton 
-                                    variant="rectangular" 
-                                    height={240} 
-                                    sx={{ borderRadius: "20px", bgcolor: "rgba(15, 23, 42, 0.5)" }} 
-                                />
-                            </Grid>
+                            <Skeleton key={i} variant="rectangular" height={220} sx={{ borderRadius: "20px", bgcolor: "rgba(15, 23, 42, 0.5)" }} />
                         ))}
-                    </Grid>
+                    </Box>
                 ) : categories.length === 0 ? (
-                    <Box 
-                        sx={{ 
-                            textAlign: "center", 
-                            py: 10, 
-                            borderRadius: "24px", 
-                            border: "1px dashed rgba(255, 255, 255, 0.15)",
-                            backgroundColor: "rgba(15, 23, 42, 0.2)"
-                        }}
-                    >
-                        <ShieldAlert size={48} style={{ color: "rgba(255,255,255,0.3)", marginBottom: "16px" }} />
-                        <Typography variant="h6" sx={{ color: "rgba(255,255,255,0.7)", mb: 1 }}>
-                            No Categories Found
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.45)" }}>
-                            Try searching for something else or create a new category.
+                    <Box className="glass-panel" sx={{ p: 6, borderRadius: "24px", textAlign: "center" }}>
+                        <ShieldAlert size={48} style={{ color: "rgba(255, 255, 255, 0.3)", marginBottom: 16 }} />
+                        <Typography variant="h6" sx={{ color: "#ffffff", fontWeight: 700 }}>
+                            No categories registered yet
                         </Typography>
                     </Box>
                 ) : (
-                    <Grid container spacing={3.5}>
+                    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }, gap: 3.5 }}>
                         {categories.map((cat) => (
-                            <Grid xs={12} sm={6} md={4} key={cat._id}>
-                                <Card
-                                    sx={{
-                                        height: "100%",
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        borderRadius: "20px",
-                                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                                        backgroundColor: "rgba(15, 23, 42, 0.55)",
-                                        backdropFilter: "blur(20px)",
-                                        boxShadow: "0 10px 30px -10px rgba(0, 0, 0, 0.5)",
-                                        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                                        "&:hover": {
-                                            transform: "translateY(-6px)",
-                                            borderColor: "rgba(59, 130, 246, 0.4)",
-                                            boxShadow: "0 20px 40px -15px rgba(59, 130, 246, 0.15)"
-                                        }
-                                    }}
-                                >
-                                    {/* Category Image or Fallback */}
-                                    <Box sx={{ position: "relative", height: "140px", backgroundColor: "rgba(30, 41, 59, 0.5)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                                        {cat.image ? (
-                                            <CardMedia
-                                                component="img"
-                                                image={cat.image}
-                                                alt={cat.categoryName}
-                                                sx={{ height: "100%", width: "100%", objectFit: "cover" }}
-                                            />
-                                        ) : (
-                                            <Activity size={48} style={{ color: "#3b82f6", opacity: 0.7 }} />
-                                        )}
-                                        {/* Status Chip */}
+                            <Box
+                                key={cat._id}
+                                className="glass-card"
+                                sx={{
+                                    borderRadius: "22px",
+                                    overflow: "hidden",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "space-between",
+                                }}
+                            >
+                                <Box sx={{ position: "relative", height: 130, backgroundColor: "rgba(30, 41, 59, 0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    {cat.image ? (
+                                        <Box component="img" src={cat.image} alt={cat.categoryName} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    ) : (
+                                        <Activity size={36} style={{ color: "#3b82f6" }} />
+                                    )}
+                                    <Box sx={{ position: "absolute", top: 12, right: 12 }}>
                                         <Chip
                                             label={cat.isActive ? "Active" : "Inactive"}
                                             size="small"
                                             sx={{
-                                                position: "absolute",
-                                                top: 16,
-                                                right: 16,
-                                                fontWeight: 600,
-                                                fontSize: "0.75rem",
-                                                backgroundColor: cat.isActive ? "rgba(34, 197, 94, 0.15)" : "rgba(239, 68, 68, 0.15)",
-                                                border: `1px solid ${cat.isActive ? "rgba(34, 197, 94, 0.3)" : "rgba(239, 68, 68, 0.3)"}`,
-                                                color: cat.isActive ? "#4ade80" : "#f87171",
-                                                backdropFilter: "blur(8px)"
+                                                backgroundColor: cat.isActive ? "rgba(16, 185, 129, 0.9)" : "rgba(239, 68, 68, 0.9)",
+                                                color: "#ffffff",
+                                                fontWeight: 700,
                                             }}
                                         />
                                     </Box>
+                                </Box>
 
-                                    <CardContent sx={{ flexGrow: 1, display: "flex", flexDirection: "column", p: 3 }}>
-                                        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1.5, color: "#ffffff" }}>
+                                <Box sx={{ p: 3, flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                                    <Box>
+                                        <Typography variant="h6" sx={{ fontWeight: 700, color: "#ffffff", mb: 0.5 }}>
                                             {cat.categoryName}
                                         </Typography>
-                                        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.55)", mb: 3, lineBreak: "anywhere", flexGrow: 1 }}>
-                                            {cat.description || "No description provided."}
+                                        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.6)", fontSize: "0.85rem", lineHeight: 1.5 }}>
+                                            {cat.description || "Certified healthcare segment."}
                                         </Typography>
-                                        
-                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid rgba(255, 255, 255, 0.08)", pt: 2 }}>
-                                            <Typography variant="caption" sx={{ color: "rgba(255, 255, 255, 0.35)", fontWeight: 500 }}>
-                                                Order: {cat.sortOrder || 0}
-                                            </Typography>
-                                            
-                                            <IconButton 
-                                                onClick={() => handleDeleteCategory(cat._id)}
-                                                sx={{ 
-                                                    color: "rgba(239, 68, 68, 0.6)",
-                                                    "&:hover": { color: "#ef4444", backgroundColor: "rgba(239, 68, 68, 0.08)" }
-                                                }}
-                                            >
-                                                <Trash2 size={16} />
-                                            </IconButton>
-                                        </Box>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
+                                    </Box>
+
+                                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 3, pt: 2, borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                                        <Button
+                                            component={Link}
+                                            href={`/dashboard/medicine?category=${cat._id}`}
+                                            size="small"
+                                            sx={{ color: "#38bdf8", textTransform: "none", fontWeight: 600 }}
+                                        >
+                                            View Products
+                                        </Button>
+                                        <IconButton onClick={() => handleDeleteCategory(cat._id)} sx={{ color: "#ef4444" }}>
+                                            <Trash2 size={18} />
+                                        </IconButton>
+                                    </Box>
+                                </Box>
+                            </Box>
                         ))}
-                    </Grid>
+                    </Box>
                 )}
 
-                {/* Create Dialog */}
+                {/* Create Modal */}
                 <Dialog
                     open={createDialogOpen}
                     onClose={() => setCreateDialogOpen(false)}
-                    PaperProps={{
-                        sx: {
-                            backgroundColor: "rgba(15, 23, 42, 0.95)",
-                            backdropFilter: "blur(24px)",
-                            border: "1px solid rgba(255, 255, 255, 0.1)",
-                            borderRadius: "24px",
-                            color: "#ffffff",
-                            maxWidth: "500px",
-                            width: "100%",
-                            p: 2
+                    maxWidth="sm"
+                    fullWidth
+                    slotProps={{
+                        paper: {
+                            sx: {
+                                backgroundColor: "rgba(15, 23, 42, 0.95)",
+                                backdropFilter: "blur(24px)",
+                                border: "1px solid rgba(255, 255, 255, 0.12)",
+                                borderRadius: "24px",
+                                color: "#ffffff",
+                                p: 1,
+                            }
                         }
                     }}
                 >
-                    <form onSubmit={handleCreateCategory}>
-                        <DialogTitle sx={{ fontWeight: 800, fontSize: "1.5rem", letterSpacing: "-0.01em", display: "flex", alignItems: "center", gap: 1.5 }}>
-                            <FolderPlus style={{ color: "#3b82f6" }} />
-                            Create New Category
-                        </DialogTitle>
-                        
-                        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5, py: 2 }}>
+                    <DialogTitle sx={{ fontWeight: 800, color: "#ffffff" }}>
+                        Create Medical Category
+                    </DialogTitle>
+                    <Box component="form" onSubmit={handleCreateCategory}>
+                        <DialogContent dividers sx={{ borderColor: "rgba(255, 255, 255, 0.1)", display: "flex", flexDirection: "column", gap: 2 }}>
                             {errorMsg && (
-                                <Box sx={{ p: 1.5, borderRadius: "10px", backgroundColor: "rgba(239, 68, 68, 0.15)", border: "1px solid rgba(239, 68, 68, 0.3)", color: "#f87171", fontSize: "0.875rem", textAlign: "center" }}>
+                                <Box sx={{ p: 1.5, borderRadius: "10px", backgroundColor: "rgba(239, 68, 68, 0.2)", border: "1px solid #ef4444", color: "#f87171", fontSize: "0.85rem" }}>
                                     {errorMsg}
                                 </Box>
                             )}
 
                             <TextField
-                                fullWidth
-                                required
                                 label="Category Name"
-                                placeholder="e.g. Antibiotics"
+                                required
+                                fullWidth
                                 value={formData.categoryName}
                                 onChange={(e) => setFormData({ ...formData, categoryName: e.target.value })}
-                                sx={dialogTextFieldStyle}
+                                slotProps={{ htmlInput: { style: { color: "#fff" } } }}
                             />
-
                             <TextField
-                                fullWidth
+                                label="Description"
                                 multiline
                                 rows={3}
-                                label="Description"
-                                placeholder="Write a short description..."
+                                fullWidth
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                sx={dialogTextFieldStyle}
+                                slotProps={{ htmlInput: { style: { color: "#fff" } } }}
                             />
-
                             <TextField
-                                fullWidth
                                 label="Image URL"
-                                placeholder="e.g. https://example.com/image.jpg"
+                                fullWidth
+                                placeholder="https://example.com/image.jpg"
                                 value={formData.image}
                                 onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                sx={dialogTextFieldStyle}
+                                slotProps={{ htmlInput: { style: { color: "#fff" } } }}
                             />
-
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2 }}>
-                                <TextField
-                                    type="number"
-                                    label="Sort Order"
-                                    value={formData.sortOrder}
-                                    onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
-                                    sx={{ ...dialogTextFieldStyle, width: "120px" }}
-                                />
-
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={formData.isActive}
-                                            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                                            color="primary"
-                                        />
-                                    }
-                                    label="Active Status"
-                                    sx={{ color: "rgba(255,255,255,0.7)" }}
-                                />
-                            </Box>
+                            <FormControlLabel
+                                control={
+                                    <Switch
+                                        checked={formData.isActive}
+                                        onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                                        color="primary"
+                                    />
+                                }
+                                label="Active Status"
+                            />
                         </DialogContent>
-                        
-                        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-                            <Button 
-                                onClick={() => setCreateDialogOpen(false)}
-                                sx={{ color: "rgba(255,255,255,0.6)", textTransform: "none", fontWeight: 600 }}
-                            >
+                        <DialogActions sx={{ p: 2 }}>
+                            <Button onClick={() => setCreateDialogOpen(false)} sx={{ color: "rgba(255, 255, 255, 0.6)" }}>
                                 Cancel
                             </Button>
-                            
-                            <Button
-                                type="submit"
-                                disabled={submitLoading}
-                                variant="contained"
-                                sx={{
-                                    background: "linear-gradient(to right, #3b82f6, #4ade80)",
-                                    textTransform: "none",
-                                    fontWeight: 600,
-                                    borderRadius: "10px",
-                                    px: 3,
-                                    "&:hover": {
-                                        background: "linear-gradient(to right, #2563eb, #22c55e)"
-                                    }
-                                }}
-                            >
-                                {submitLoading ? "Creating..." : "Create Category"}
+                            <Button type="submit" disabled={submitLoading} variant="contained" sx={{ borderRadius: "12px", background: "linear-gradient(to right, #3b82f6, #10b981)" }}>
+                                {submitLoading ? "Saving..." : "Save Category"}
                             </Button>
                         </DialogActions>
-                    </form>
+                    </Box>
                 </Dialog>
             </Container>
         </Box>
     );
 }
-
-const dialogTextFieldStyle = {
-    "& .MuiOutlinedInput-root": {
-        color: "#ffffff",
-        "& fieldset": {
-            borderColor: "rgba(255, 255, 255, 0.12)",
-            borderRadius: "12px",
-        },
-        "&:hover fieldset": {
-            borderColor: "rgba(255, 255, 255, 0.3)",
-        },
-        "&.Mui-focused fieldset": {
-            borderColor: "#3b82f6",
-        },
-    },
-    "& .MuiInputLabel-root": {
-        color: "rgba(255, 255, 255, 0.45)",
-        "&.Mui-focused": {
-            color: "#3b82f6",
-        },
-    },
-};

@@ -4,20 +4,18 @@
 
 @layer base {
   :root {
-    --background: #ffffff;
-    --foreground: #0f172a;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --background: #0f172a;
-      --foreground: #f8fafc;
-    }
+    --background: #020617;
+    --foreground: #f8fafc;
+    --card-bg: rgba(15, 23, 42, 0.6);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --primary-blue: #3b82f6;
+    --primary-emerald: #10b981;
   }
 
   html {
     height: 100%;
     scroll-behavior: smooth;
+    color-scheme: dark;
   }
 
   html,
@@ -29,10 +27,35 @@
   body {
     min-height: 100%;
     color: var(--foreground);
-    background: var(--background);
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background-color: #020617;
+    background-image: 
+      radial-gradient(at 10% 20%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
+      radial-gradient(at 90% 80%, rgba(16, 185, 129, 0.06) 0px, transparent 50%),
+      radial-gradient(at 50% 50%, rgba(15, 23, 42, 1) 0px, transparent 100%);
+    background-attachment: fixed;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom luxury scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #020617;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+    border: 2px solid #020617;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
   }
 
   /* Remove default focus outline/border on mouse clicks, keeping it for keyboard users */
@@ -41,7 +64,7 @@
     box-shadow: none !important;
   }
 
-  /* Hide the blinking text cursor (caret) on non-editable elements on click (fixes browser Caret Browsing caret) */
+  /* Hide caret on non-editable elements */
   *:not(input):not(textarea):not([contenteditable]):not([contenteditable="true"]) {
     caret-color: transparent !important;
   }
@@ -56,23 +79,55 @@
     color: inherit;
     text-decoration: none;
   }
-
-  @media (prefers-color-scheme: dark) {
-    html {
-      color-scheme: dark;
-    }
-  }
 }
 
-/* Custom class to ensure top padding clears the floating global navbar */
+/* Glassmorphism utility styles */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+.glass-card {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background: rgba(30, 41, 59, 0.55);
+  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -15px rgba(59, 130, 246, 0.15);
+}
+
+/* Top padding container class for pages with fixed navbar */
 .medicines-page-container {
-  padding-top: 144px !important;
-  /* pt-36 */
+  padding-top: 110px !important;
 }
 
 @media (min-width: 768px) {
   .medicines-page-container {
-    padding-top: 160px !important;
-    /* pt-40 */
+    padding-top: 130px !important;
   }
+}
+
+/* Keyframe Animations */
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 4s infinite ease-in-out;
 }

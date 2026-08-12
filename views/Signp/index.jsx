@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
@@ -10,19 +11,13 @@ import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import Checkbox from "@mui/material/Checkbox";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import MenuItem from "@mui/material/MenuItem";
-import { keyframes } from "@mui/system";
-import { X, Eye, EyeOff, Mail, Lock, User, Phone, Shield } from "lucide-react";
+import CircularProgress from "@mui/material/CircularProgress";
+import { Eye, EyeOff, Mail, Lock, User, Phone, Pill, ArrowLeft } from "lucide-react";
 import { AuthService } from "../../services/authService/authService";
-
-const scaleIn = keyframes`
-  0% { opacity: 0; transform: scale(0.92); }
-  100% { opacity: 1; transform: scale(1); }
-`;
+import { toast } from "react-hot-toast";
 
 export const Signup = () => {
     const router = useRouter();
-    const [openSignup, setOpenSignup] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         name: "",
@@ -30,15 +25,10 @@ export const Signup = () => {
         type: "user",
         email: "",
         password: "",
-        agree: false
+        agree: true
     });
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
-
-    const handleClose = () => {
-        setOpenSignup(false);
-        router.push("/");
-    };
 
     const handleTogglePassword = () => {
         setShowPassword(!showPassword);
@@ -51,18 +41,17 @@ export const Signup = () => {
         try {
             const { name, phone, type, email, password } = formData;
             await AuthService.signup({ name, phone, type, email, password });
-            alert(`Account created successfully for ${email}!`);
+            toast.success(`Account created successfully for ${email}!`);
             router.push("/dashboard/login");
         } catch (err) {
             console.error("Signup error:", err);
             const errMsg = err.response?.data?.message || err.message || "Failed to create account";
             setErrorMsg(errMsg);
+            toast.error(errMsg);
         } finally {
             setLoading(false);
         }
     };
-
-    if (!openSignup) return null;
 
     return (
         <Box
@@ -77,10 +66,10 @@ export const Signup = () => {
                 width: "100vw",
                 backgroundColor: "#020617",
                 overflowY: "auto",
-                padding: 3,
+                p: { xs: 2, sm: 4 },
             }}
         >
-            {/* Premium Glowing Orbs in Background */}
+            {/* Ambient Lighting */}
             <Box
                 sx={{
                     position: "absolute",
@@ -90,7 +79,7 @@ export const Signup = () => {
                     height: "350px",
                     borderRadius: "50%",
                     background: "radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)",
-                    filter: "blur(40px)",
+                    filter: "blur(50px)",
                     pointerEvents: "none",
                 }}
             />
@@ -102,290 +91,196 @@ export const Signup = () => {
                     width: "350px",
                     height: "350px",
                     borderRadius: "50%",
-                    background: "radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%)",
-                    filter: "blur(40px)",
+                    background: "radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%)",
+                    filter: "blur(50px)",
                     pointerEvents: "none",
                 }}
             />
 
-            {/* Glassmorphic Modal Card */}
+            {/* Signup Form Card */}
             <Box
-                component="form"
-                onSubmit={handleSubmit}
+                className="glass-panel"
                 sx={{
                     position: "relative",
                     width: "100%",
-                    maxWidth: "460px",
-                    borderRadius: "24px",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    backgroundColor: "rgba(15, 23, 42, 0.65)",
-                    backdropFilter: "blur(24px)",
-                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.6)",
-                    p: { xs: 4, sm: 5 },
-                    zIndex: 10,
-                    color: "#ffffff",
-                    animation: `${scaleIn} 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)`,
+                    maxWidth: "480px",
+                    borderRadius: "28px",
+                    p: { xs: 3.5, sm: 5 },
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    boxShadow: "0 25px 60px rgba(0, 0, 0, 0.8)",
+                    my: 4,
                 }}
             >
-                {/* Close Button */}
-                <IconButton
-                    onClick={handleClose}
-                    sx={{
-                        position: "absolute",
-                        top: 20,
-                        right: 20,
-                        color: "rgba(255, 255, 255, 0.5)",
-                        backgroundColor: "rgba(255, 255, 255, 0.04)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                        transition: "all 0.2s ease",
-                        "&:hover": {
-                            color: "#ffffff",
-                            backgroundColor: "rgba(255, 255, 255, 0.12)",
-                            transform: "rotate(90deg)",
-                        }
-                    }}
-                    aria-label="Close dialog"
-                >
-                    <X size={18} />
-                </IconButton>
-
-                {/* Header */}
-                <Box sx={{ mb: 4, textAlign: "center" }}>
-                    <Typography
-                        variant="h4"
-                        sx={{
-                            fontWeight: 700,
-                            letterSpacing: "-0.02em",
-                            background: "linear-gradient(to right, #3b82f6, #4ade80)",
-                            WebkitBackgroundClip: "text",
-                            WebkitTextFillColor: "transparent",
-                            mb: 1
-                        }}
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+                    <Button
+                        component={Link}
+                        href="/"
+                        startIcon={<ArrowLeft size={16} />}
+                        sx={{ color: "rgba(255, 255, 255, 0.7)", textTransform: "none", fontSize: "0.85rem" }}
                     >
-                        Create Account
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.5)" }}>
-                        Get started with Andromeda and set up your profile
-                    </Typography>
-                </Box>
-
-                {/* Input Fields */}
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, mb: 3 }}>
-                    <TextField
-                        fullWidth
-                        required
-                        label="Full Name"
-                        placeholder="John Doe"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start" sx={{ color: "rgba(255, 255, 255, 0.4)", mr: 1 }}>
-                                    <User size={18} />
-                                </InputAdornment>
-                            ),
-                        }}
-                        sx={textFieldStyle}
-                    />
-
-                    <TextField
-                        fullWidth
-                        required
-                        type="email"
-                        label="Email Address"
-                        placeholder="john@example.com"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start" sx={{ color: "rgba(255, 255, 255, 0.4)", mr: 1 }}>
-                                    <Mail size={18} />
-                                </InputAdornment>
-                            ),
-                        }}
-                        sx={textFieldStyle}
-                    />
-
-                    <TextField
-                        fullWidth
-                        label="Phone Number"
-                        placeholder="+1 (555) 000-0000"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start" sx={{ color: "rgba(255, 255, 255, 0.4)", mr: 1 }}>
-                                    <Phone size={18} />
-                                </InputAdornment>
-                            ),
-                        }}
-                        sx={textFieldStyle}
-                    />
-
-                    <TextField
-                        select
-                        fullWidth
-                        required
-                        label="User Type"
-                        value={formData.type}
-                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start" sx={{ color: "rgba(255, 255, 255, 0.4)", mr: 1 }}>
-                                    <Shield size={18} />
-                                </InputAdornment>
-                            ),
-                        }}
-                        SelectProps={{
-                            MenuProps: {
-                                PaperProps: {
-                                    sx: {
-                                        backgroundColor: "#0f172a",
-                                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                                        borderRadius: "12px",
-                                        color: "#ffffff",
-                                        "& .MuiMenuItem-root": {
-                                            fontSize: "0.875rem",
-                                            py: 1,
-                                            "&.Mui-selected": {
-                                                backgroundColor: "rgba(59, 130, 246, 0.2)",
-                                                "&:hover": {
-                                                    backgroundColor: "rgba(59, 130, 246, 0.3)",
-                                                },
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        }}
-                        sx={{
-                            ...textFieldStyle,
-                            "& .MuiSelect-select": {
-                                color: "#ffffff",
-                            },
-                            "& .MuiSvgIcon-root": {
-                                color: "rgba(255, 255, 255, 0.45)",
-                            }
-                        }}
-                    >
-                        <MenuItem value="user">User</MenuItem>
-                        <MenuItem value="admin">Admin</MenuItem>
-                        <MenuItem value="superadmin">Super Admin</MenuItem>
-                    </TextField>
-
-                    <TextField
-                        fullWidth
-                        required
-                        type={showPassword ? "text" : "password"}
-                        label="Password"
-                        placeholder="••••••••"
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start" sx={{ color: "rgba(255, 255, 255, 0.4)", mr: 1 }}>
-                                    <Lock size={18} />
-                                </InputAdornment>
-                            ),
-                            endAdornment: (
-                                <InputAdornment position="end">
-                                    <IconButton onClick={handleTogglePassword} edge="end" sx={{ color: "rgba(255, 255, 255, 0.4)" }}>
-                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                    </IconButton>
-                                </InputAdornment>
-                            ),
-                        }}
-                        sx={textFieldStyle}
-                    />
-                </Box>
-
-                {/* Agreement Checkbox */}
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            required
-                            checked={formData.agree}
-                            onChange={(e) => setFormData({ ...formData, agree: e.target.checked })}
-                            sx={{
-                                color: "rgba(255, 255, 255, 0.3)",
-                                "&.Mui-checked": {
-                                    color: "#3b82f6",
-                                },
-                            }}
-                        />
-                    }
-                    label={
-                        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.65)" }}>
-                            I agree to the Terms of Service and Privacy Policy
+                        Home
+                    </Button>
+                    <Link href="/" style={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Pill size={20} className="text-blue-400" />
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: "#ffffff" }}>
+                            Healthcare Expert
                         </Typography>
-                    }
-                    sx={{ mb: 4, alignItems: "flex-start", "& .MuiFormControlLabel-label": { mt: 0.25 } }}
-                />
+                    </Link>
+                </Box>
 
-                {/* Error message display */}
+                <Typography variant="h4" sx={{ fontWeight: 800, color: "#ffffff", mb: 0.5, letterSpacing: "-0.02em" }}>
+                    Create Account
+                </Typography>
+                <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.6)", mb: 3.5 }}>
+                    Join Healthcare Expert for quick prescription refills & digital care.
+                </Typography>
+
                 {errorMsg && (
-                    <Box
-                        sx={{
-                            p: 1.5,
-                            mb: 3,
-                            borderRadius: "12px",
-                            backgroundColor: "rgba(239, 68, 68, 0.15)",
-                            border: "1px solid rgba(239, 68, 68, 0.3)",
-                            color: "#f87171",
-                            textAlign: "center",
-                            fontSize: "0.875rem",
-                        }}
-                    >
+                    <Box sx={{ p: 1.5, mb: 3, borderRadius: "12px", backgroundColor: "rgba(239, 68, 68, 0.15)", border: "1px solid #ef4444", color: "#f87171", fontSize: "0.85rem" }}>
                         {errorMsg}
                     </Box>
                 )}
 
-                {/* Submit Button */}
-                <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    disabled={loading}
-                    sx={{
-                        py: 1.5,
-                        borderRadius: "12px",
-                        fontWeight: 600,
-                        fontSize: "1rem",
-                        textTransform: "none",
-                        background: "linear-gradient(to right, #3b82f6, #4ade80)",
-                        boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3)",
-                        transition: "all 0.3s ease",
-                        "&:hover": {
-                            background: "linear-gradient(to right, #2563eb, #22c55e)",
-                            boxShadow: "0 6px 20px rgba(34, 197, 94, 0.4)",
-                            transform: "translateY(-1px)",
-                        },
-                        "&.Mui-disabled": {
-                            background: "rgba(255, 255, 255, 0.12)",
-                            color: "rgba(255, 255, 255, 0.3)",
-                            boxShadow: "none",
-                        }
-                    }}
-                >
-                    {loading ? "Creating Account..." : "Create Account"}
-                </Button>
+                <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <TextField
+                        label="Full Name"
+                        required
+                        fullWidth
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        slotProps={{
+                            input: {
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <User size={18} style={{ color: "rgba(255, 255, 255, 0.5)" }} />
+                                    </InputAdornment>
+                                ),
+                                style: { color: "#ffffff" }
+                            }
+                        }}
+                        sx={{
+                            backgroundColor: "rgba(15, 23, 42, 0.8)",
+                            borderRadius: "14px",
+                            "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.1)" },
+                            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(59, 130, 246, 0.4)" },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#3b82f6" }
+                        }}
+                    />
 
-                {/* Already have an account link */}
-                <Box sx={{ mt: 3, textAlign: "center" }}>
-                    <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.45)" }}>
-                        Already have an account?{" "}
-                        <Box
-                            component="span"
-                            onClick={() => router.push("/dashboard/login")}
-                            sx={{
-                                color: "#3b82f6",
-                                fontWeight: 500,
-                                cursor: "pointer",
-                                "&:hover": { textDecoration: "underline", color: "#60a5fa" }
-                            }}
-                        >
-                            Sign In
-                        </Box>
+                    <TextField
+                        label="Phone Number"
+                        type="tel"
+                        required
+                        fullWidth
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        slotProps={{
+                            input: {
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Phone size={18} style={{ color: "rgba(255, 255, 255, 0.5)" }} />
+                                    </InputAdornment>
+                                ),
+                                style: { color: "#ffffff" }
+                            }
+                        }}
+                        sx={{
+                            backgroundColor: "rgba(15, 23, 42, 0.8)",
+                            borderRadius: "14px",
+                            "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.1)" },
+                            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(59, 130, 246, 0.4)" },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#3b82f6" }
+                        }}
+                    />
+
+                    <TextField
+                        label="Email Address"
+                        type="email"
+                        required
+                        fullWidth
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        slotProps={{
+                            input: {
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Mail size={18} style={{ color: "rgba(255, 255, 255, 0.5)" }} />
+                                    </InputAdornment>
+                                ),
+                                style: { color: "#ffffff" }
+                            }
+                        }}
+                        sx={{
+                            backgroundColor: "rgba(15, 23, 42, 0.8)",
+                            borderRadius: "14px",
+                            "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.1)" },
+                            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(59, 130, 246, 0.4)" },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#3b82f6" }
+                        }}
+                    />
+
+                    <TextField
+                        label="Password"
+                        type={showPassword ? "text" : "password"}
+                        required
+                        fullWidth
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        slotProps={{
+                            input: {
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Lock size={18} style={{ color: "rgba(255, 255, 255, 0.5)" }} />
+                                    </InputAdornment>
+                                ),
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton onClick={handleTogglePassword} edge="end" sx={{ color: "rgba(255, 255, 255, 0.5)" }}>
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                                style: { color: "#ffffff" }
+                            }
+                        }}
+                        sx={{
+                            backgroundColor: "rgba(15, 23, 42, 0.8)",
+                            borderRadius: "14px",
+                            "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.1)" },
+                            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(59, 130, 246, 0.4)" },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#3b82f6" }
+                        }}
+                    />
+
+                    <Button
+                        type="submit"
+                        disabled={loading}
+                        fullWidth
+                        variant="contained"
+                        sx={{
+                            py: 1.4,
+                            mt: 1,
+                            borderRadius: "14px",
+                            background: "linear-gradient(to right, #3b82f6, #10b981)",
+                            fontWeight: 700,
+                            textTransform: "none",
+                            fontSize: "1rem",
+                            boxShadow: "0 10px 25px rgba(59, 130, 246, 0.3)",
+                            "&:hover": {
+                                background: "linear-gradient(to right, #2563eb, #059669)",
+                            }
+                        }}
+                    >
+                        {loading ? <CircularProgress size={24} color="inherit" /> : "Create Account"}
+                    </Button>
+                </Box>
+
+                <Box sx={{ textAlign: "center", mt: 3.5, pt: 3, borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                    <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.6)" }}>
+                        Already registered?{" "}
+                        <Link href="/dashboard/login" style={{ color: "#38bdf8", fontWeight: 700 }}>
+                            Sign In Here
+                        </Link>
                     </Typography>
                 </Box>
             </Box>
@@ -393,32 +288,4 @@ export const Signup = () => {
     );
 };
 
-// Reusable custom styling for TextField elements in dark/glassmorphic UI
-const textFieldStyle = {
-    "& .MuiOutlinedInput-root": {
-        color: "#ffffff",
-        "& fieldset": {
-            borderColor: "rgba(255, 255, 255, 0.12)",
-            borderRadius: "12px",
-        },
-        "&:hover fieldset": {
-            borderColor: "rgba(255, 255, 255, 0.3)",
-        },
-        "&.Mui-focused fieldset": {
-            borderColor: "#3b82f6",
-            borderWidth: "1px",
-        },
-    },
-    "& .MuiInputLabel-root": {
-        color: "rgba(255, 255, 255, 0.45)",
-        "&.Mui-focused": {
-            color: "#3b82f6",
-        },
-    },
-    "& .MuiOutlinedInput-input": {
-        "&::placeholder": {
-            color: "rgba(255, 255, 255, 0.3)",
-            opacity: 1,
-        },
-    },
-};
+export default Signup;

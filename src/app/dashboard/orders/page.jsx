@@ -13,16 +13,12 @@ import {
     Button,
     CircularProgress,
     Divider,
-    Card,
-    CardContent,
     Dialog,
     DialogTitle,
     DialogContent,
     DialogActions,
-    Grid,
-    Paper,
     IconButton,
-    Tooltip
+    Chip
 } from "@mui/material";
 import {
     ShoppingBag,
@@ -36,7 +32,9 @@ import {
     CheckCircle2,
     XCircle,
     FileText,
-    Trash2
+    Trash2,
+    ChevronRight,
+    Package
 } from "lucide-react";
 
 export default function OrdersPage() {
@@ -44,13 +42,13 @@ export default function OrdersPage() {
     const { user, loading: authLoading } = useAuth();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [filterStatus, setFilterStatus] = useState("ALL");
     
     // Details Modal state
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [modalLoading, setModalLoading] = useState(false);
     const [openDetails, setOpenDetails] = useState(false);
     const [cancellingId, setCancellingId] = useState(null);
-    const [hidingId, setHidingId] = useState(null);
 
     const fetchOrders = async () => {
         try {
@@ -98,13 +96,11 @@ export default function OrdersPage() {
             await OrderService.cancelOrder(orderId);
             toast.success("Order cancelled successfully");
             
-            // Refresh details if open
             if (selectedOrder && selectedOrder._id === orderId) {
                 const detailedOrder = await OrderService.getOrderById(orderId);
                 setSelectedOrder(detailedOrder);
             }
             
-            // Refresh list
             const updatedOrders = await OrderService.getOrders();
             setOrders(updatedOrders || []);
         } catch (error) {
@@ -115,582 +111,252 @@ export default function OrdersPage() {
         }
     };
 
-    const handleHideOrder = async (orderId) => {
-        if (!confirm("Are you sure you want to delete this order from your history?")) return;
+    const filteredOrders = orders.filter(ord => {
+        if (filterStatus === "ALL") return true;
+        const st = (ord.status || ord.orderStatus || "").toUpperCase();
+        return st === filterStatus;
+    });
 
-        setHidingId(orderId);
-        try {
-            await OrderService.hideOrder(orderId);
-            toast.success("Order deleted from history");
-            
-            // Refresh list
-            const updatedOrders = await OrderService.getOrders();
-            setOrders(updatedOrders || []);
-            
-            // Close details if open
-            if (selectedOrder && selectedOrder._id === orderId) {
-                setOpenDetails(false);
-            }
-        } catch (error) {
-            console.error("Failed to delete order:", error);
-            toast.error(error.response?.data?.message || "Failed to delete order");
-        } finally {
-            setHidingId(null);
+    const getStatusChip = (status) => {
+        const st = (status || "PENDING").toUpperCase();
+        if (st === "DELIVERED") {
+            return <Chip icon={<CheckCircle2 size={14} />} label="Delivered" size="small" sx={{ backgroundColor: "rgba(16, 185, 129, 0.2)", color: "#34d399", border: "1px solid #10b981", fontWeight: 700 }} />;
         }
-    };
-
-    const getStatusStyle = (status) => {
-        switch (status) {
-            case "New Orders":
-                return {
-                    label: "New",
-                    color: "#3b82f6",
-                    bgColor: "rgba(59, 130, 246, 0.12)",
-                    icon: <Clock size={14} className="mr-1" />
-                };
-            case "Processing Orders":
-                return {
-                    label: "Processing",
-                    color: "#f59e0b",
-                    bgColor: "rgba(245, 158, 11, 0.12)",
-                    icon: <Clock size={14} className="mr-1" />
-                };
-            case "Shipped Orders":
-                return {
-                    label: "Shipped",
-                    color: "#06b6d4",
-                    bgColor: "rgba(6, 182, 212, 0.12)",
-                    icon: <Truck size={14} className="mr-1" />
-                };
-            case "Delivered Orders":
-                return {
-                    label: "Delivered",
-                    color: "#10b981",
-                    bgColor: "rgba(16, 185, 129, 0.12)",
-                    icon: <CheckCircle2 size={14} className="mr-1" />
-                };
-            case "Cancelled Orders":
-                return {
-                    label: "Cancelled",
-                    color: "#ef4444",
-                    bgColor: "rgba(239, 68, 68, 0.12)",
-                    icon: <XCircle size={14} className="mr-1" />
-                };
-            default:
-                return {
-                    label: status,
-                    color: "#94a3b8",
-                    bgColor: "rgba(148, 163, 184, 0.12)",
-                    icon: <Clock size={14} className="mr-1" />
-                };
+        if (st === "CANCELLED" || st === "CANCELED") {
+            return <Chip icon={<XCircle size={14} />} label="Cancelled" size="small" sx={{ backgroundColor: "rgba(239, 68, 68, 0.2)", color: "#f87171", border: "1px solid #ef4444", fontWeight: 700 }} />;
         }
+        if (st === "SHIPPED" || st === "PROCESSING") {
+            return <Chip icon={<Truck size={14} />} label={st} size="small" sx={{ backgroundColor: "rgba(59, 130, 246, 0.2)", color: "#38bdf8", border: "1px solid #3b82f6", fontWeight: 700 }} />;
+        }
+        return <Chip icon={<Clock size={14} />} label="Pending" size="small" sx={{ backgroundColor: "rgba(245, 158, 11, 0.2)", color: "#fbbf24", border: "1px solid #f59e0b", fontWeight: 700 }} />;
     };
-
-    if (authLoading || (loading && orders.length === 0)) {
-        return (
-            <Box sx={{ display: "flex", minHeight: "100vh", alignItems: "center", justifyContent: "center", backgroundColor: "#020617" }}>
-                <CircularProgress sx={{ color: "#3b82f6" }} />
-            </Box>
-        );
-    }
 
     return (
-        <Box sx={{ minHeight: "100vh", backgroundColor: "#020617", color: "#ffffff", pt: 16, pb: 10 }}>
+        <Box sx={{ minHeight: "100vh", backgroundColor: "#020617", color: "#ffffff", pt: { xs: 12, md: 14 }, pb: 10 }}>
             <Container maxWidth="lg">
-                {/* Navigation Header */}
-                <Box sx={{ mb: 4 }}>
+                {/* Header */}
+                <Box sx={{ mb: 4, display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between", gap: 2 }}>
+                    <Box>
+                        <Typography variant="h4" sx={{ fontWeight: 800, color: "#ffffff", letterSpacing: "-0.02em" }}>
+                            My Orders History
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.6)", mt: 0.5 }}>
+                            Track active prescriptions, past deliveries, and order receipts.
+                        </Typography>
+                    </Box>
+
                     <Button
-                        onClick={() => router.push("/dashboard/medicine")}
+                        component={Link}
+                        href="/dashboard/medicine"
                         startIcon={<ArrowLeft size={16} />}
-                        sx={{
-                            color: "rgba(255, 255, 255, 0.7)",
-                            borderColor: "rgba(255, 255, 255, 0.15)",
-                            textTransform: "none",
-                            fontWeight: 600,
-                            borderRadius: "10px",
-                            "&:hover": {
-                                color: "#ffffff",
-                                borderColor: "rgba(255, 255, 255, 0.3)",
-                                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                            }
-                        }}
-                        variant="outlined"
+                        sx={{ color: "#38bdf8", textTransform: "none", fontWeight: 600 }}
                     >
-                        Back to Shop
+                        Return to Shop
                     </Button>
                 </Box>
 
-                {/* Page Title */}
-                <Typography variant="h3" sx={{ fontWeight: 800, mb: 1, background: "linear-gradient(to right, #3b82f6, #4ade80)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: "-0.025em" }}>
-                    My Orders
-                </Typography>
-                <Typography variant="body1" sx={{ color: "rgba(255, 255, 255, 0.55)", mb: 5 }}>
-                    Track status, check prescriptions, and review your previous formulations.
-                </Typography>
+                {/* Status Filter Tabs */}
+                <Box sx={{ display: "flex", gap: 1.5, mb: 4, overflowX: "auto", pb: 1 }}>
+                    {[
+                        { label: "All Orders", key: "ALL" },
+                        { label: "Pending / Processing", key: "PENDING" },
+                        { label: "Delivered", key: "DELIVERED" },
+                        { label: "Cancelled", key: "CANCELLED" },
+                    ].map((tab) => (
+                        <Button
+                            key={tab.key}
+                            onClick={() => setFilterStatus(tab.key)}
+                            variant={filterStatus === tab.key ? "contained" : "outlined"}
+                            sx={{
+                                borderRadius: "9999px",
+                                textTransform: "none",
+                                fontWeight: 600,
+                                fontSize: "0.85rem",
+                                whiteSpace: "nowrap",
+                                px: 2.5,
+                                py: 0.6,
+                                ...(filterStatus === tab.key ? {
+                                    background: "linear-gradient(to right, #3b82f6, #10b981)",
+                                    color: "#ffffff",
+                                } : {
+                                    borderColor: "rgba(255, 255, 255, 0.12)",
+                                    color: "rgba(255, 255, 255, 0.7)",
+                                })
+                            }}
+                        >
+                            {tab.label}
+                        </Button>
+                    ))}
+                </Box>
 
-                {orders.length === 0 ? (
-                    <Box
-                        sx={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            textAlign: "center",
-                            py: 12,
-                            px: 4,
-                            borderRadius: "24px",
-                            border: "1px dashed rgba(255, 255, 255, 0.12)",
-                            backgroundColor: "rgba(15, 23, 42, 0.2)"
-                        }}
-                    >
-                        <ShoppingBag size={64} className="text-slate-500 mb-6 opacity-80" />
-                        <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-                            No orders placed yet
+                {/* Orders List */}
+                {loading ? (
+                    <Box sx={{ textAlign: "center", py: 12 }}>
+                        <CircularProgress color="primary" />
+                        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.5)", mt: 2 }}>
+                            Loading your orders history...
                         </Typography>
-                        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.45)", mb: 4, maxWidth: "400px" }}>
-                            Your medical orders ledger is empty. Select your formulations and check out to place an order.
+                    </Box>
+                ) : filteredOrders.length === 0 ? (
+                    <Box className="glass-panel" sx={{ p: 6, borderRadius: "24px", textAlign: "center" }}>
+                        <Package size={48} style={{ color: "rgba(255, 255, 255, 0.3)", marginBottom: 16 }} />
+                        <Typography variant="h6" sx={{ color: "#ffffff", fontWeight: 700 }}>
+                            No orders found
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.5)", mt: 1, mb: 3 }}>
+                            You haven't placed any orders matching this criteria yet.
                         </Typography>
                         <Button
                             component={Link}
                             href="/dashboard/medicine"
                             variant="contained"
-                            sx={{
-                                background: "linear-gradient(to right, #3b82f6, #06b6d4)",
-                                textTransform: "none",
-                                fontWeight: 700,
-                                px: 4,
-                                py: 1.5,
-                                borderRadius: "12px",
-                                boxShadow: "0 4px 15px rgba(59, 130, 246, 0.25)",
-                                "&:hover": {
-                                    background: "linear-gradient(to right, #2563eb, #0891b2)"
-                                }
-                            }}
+                            sx={{ borderRadius: "9999px", px: 4, py: 1, background: "linear-gradient(to right, #3b82f6, #10b981)", textTransform: "none", fontWeight: 700 }}
                         >
-                            Explore Medicines
+                            Browse Medicines
                         </Button>
                     </Box>
                 ) : (
-                    <Grid container spacing={3}>
-                        {orders.map((order) => {
-                            const statusStyle = getStatusStyle(order.status);
-                            const itemsCount = order.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
-                            const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric"
-                            });
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+                        {filteredOrders.map((ord) => {
+                            const dateStr = ord.createdAt ? new Date(ord.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+                            const items = ord.medicines || ord.items || [];
 
                             return (
-                                <Grid item xs={12} key={order._id}>
-                                    <Card
-                                        sx={{
-                                            borderRadius: "20px",
-                                            border: "1px solid rgba(255, 255, 255, 0.05)",
-                                            backgroundColor: "rgba(15, 23, 42, 0.35)",
-                                            backdropFilter: "blur(12px)",
-                                            transition: "all 0.3s ease",
-                                            "&:hover": {
-                                                borderColor: "rgba(59, 130, 246, 0.25)",
-                                                transform: "translateY(-2px)"
-                                            }
-                                        }}
-                                    >
-                                        <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
-                                            <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between", alignItems: { xs: "stretch", sm: "center" }, gap: 2 }}>
-                                                {/* Left details */}
-                                                <Box>
-                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", mb: 1 }}>
-                                                        <Typography variant="h6" sx={{ fontWeight: 800, color: "#ffffff", fontSize: "1.1rem" }}>
-                                                            Order #{order._id.slice(-6).toUpperCase()}
-                                                        </Typography>
-                                                        <Box
-                                                            sx={{
-                                                                display: "flex",
-                                                                alignItems: "center",
-                                                                color: statusStyle.color,
-                                                                backgroundColor: statusStyle.bgColor,
-                                                                px: 2,
-                                                                py: 0.5,
-                                                                borderRadius: "9999px",
-                                                                fontSize: "12px",
-                                                                fontWeight: 700
-                                                            }}
-                                                        >
-                                                            {statusStyle.icon}
-                                                            {statusStyle.label}
-                                                        </Box>
-                                                    </Box>
-                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 3, color: "rgba(255,255,255,0.4)", fontSize: "13px" }}>
-                                                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                                                            <Calendar size={14} />
-                                                            <span>{orderDate}</span>
-                                                        </Box>
-                                                        <span>•</span>
-                                                        <span>{itemsCount} {itemsCount === 1 ? "item" : "items"}</span>
-                                                    </Box>
-                                                </Box>
+                                <Box
+                                    key={ord._id}
+                                    className="glass-card"
+                                    sx={{
+                                        p: 3,
+                                        borderRadius: "20px",
+                                        display: "flex",
+                                        flexDirection: { xs: "column", md: "row" },
+                                        alignItems: { xs: "flex-start", md: "center" },
+                                        justifyContent: "space-between",
+                                        gap: 3,
+                                    }}
+                                >
+                                    <Box sx={{ flexGrow: 1 }}>
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1, flexWrap: "wrap" }}>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#ffffff" }}>
+                                                Order #{ord._id.slice(-8).toUpperCase()}
+                                            </Typography>
+                                            {getStatusChip(ord.status || ord.orderStatus)}
+                                            <Typography variant="caption" sx={{ color: "rgba(255, 255, 255, 0.5)", display: "flex", alignItems: "center", gap: 0.5 }}>
+                                                <Calendar size={13} /> {dateStr}
+                                            </Typography>
+                                        </Box>
 
-                                                {/* Right Pricing and Actions */}
-                                                <Box sx={{ display: "flex", alignItems: "center", justifySelf: "flex-end", gap: { xs: 2.5, sm: 4 }, flexDirection: { xs: "row", sm: "row" }, justifyContent: { xs: "space-between", sm: "flex-end" } }}>
-                                                    <Box sx={{ textAlign: { xs: "left", sm: "right" } }}>
-                                                        <Typography sx={{ fontWeight: 900, color: "#4ade80", fontSize: "1.2rem" }}>
-                                                            ₹{order.totalAmount}
-                                                        </Typography>
-                                                        <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.4)" }}>
-                                                            {order.paymentMethod} • {order.paymentStatus}
-                                                        </Typography>
-                                                    </Box>
+                                        <Typography variant="body2" sx={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "0.9rem" }}>
+                                            {items.length} item(s) • Total: <strong style={{ color: "#34d399" }}>₹{ord.totalAmount}</strong> ({ord.paymentMethod || "COD"})
+                                        </Typography>
+                                    </Box>
 
-                                                    <Box sx={{ display: "flex", gap: 1.5 }}>
-                                                        <Button
-                                                            onClick={() => handleViewDetails(order._id)}
-                                                            variant="contained"
-                                                            size="small"
-                                                            sx={{
-                                                                textTransform: "none",
-                                                                fontWeight: 700,
-                                                                borderRadius: "10px",
-                                                                px: 2.5,
-                                                                py: 1.25,
-                                                                background: "linear-gradient(to right, #3b82f6, #0ea5e9)",
-                                                                "&:hover": {
-                                                                    background: "linear-gradient(to right, #2563eb, #0284c7)"
-                                                                }
-                                                            }}
-                                                        >
-                                                            View Details
-                                                        </Button>
-                                                        {order.status === "New Orders" && (
-                                                            <Button
-                                                                onClick={() => handleCancelOrder(order._id)}
-                                                                disabled={cancellingId === order._id}
-                                                                variant="outlined"
-                                                                color="error"
-                                                                size="small"
-                                                                sx={{
-                                                                    textTransform: "none",
-                                                                    fontWeight: 600,
-                                                                    borderRadius: "10px",
-                                                                    borderColor: "rgba(239, 68, 68, 0.3)",
-                                                                    "&:hover": {
-                                                                        borderColor: "rgba(239, 68, 68, 0.6)",
-                                                                        backgroundColor: "rgba(239, 68, 68, 0.05)"
-                                                                    }
-                                                                }}
-                                                            >
-                                                                {cancellingId === order._id ? "Cancelling..." : "Cancel"}
-                                                            </Button>
-                                                        )}
-                                                        <Tooltip title="Delete from history">
-                                                            <IconButton
-                                                                onClick={() => handleHideOrder(order._id)}
-                                                                disabled={hidingId === order._id}
-                                                                sx={{
-                                                                    color: "rgba(255, 255, 255, 0.4)",
-                                                                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                                                                    borderRadius: "10px",
-                                                                    p: 1,
-                                                                    "&:hover": {
-                                                                        color: "#ef4444",
-                                                                        borderColor: "rgba(239, 68, 68, 0.3)",
-                                                                        backgroundColor: "rgba(239, 68, 68, 0.05)"
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <Trash2 size={18} />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    </Box>
-                                                </Box>
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
+                                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, width: { xs: "100%", md: "auto" }, justifyContent: { xs: "space-between", md: "flex-end" } }}>
+                                        <Button
+                                            onClick={() => handleViewDetails(ord._id)}
+                                            variant="outlined"
+                                            size="small"
+                                            endIcon={<ChevronRight size={16} />}
+                                            sx={{
+                                                borderRadius: "9999px",
+                                                borderColor: "rgba(56, 189, 248, 0.3)",
+                                                color: "#38bdf8",
+                                                textTransform: "none",
+                                                px: 2.5,
+                                                py: 0.8,
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            View Details
+                                        </Button>
+
+                                        {((ord.status || ord.orderStatus || "").toUpperCase() === "PENDING") && (
+                                            <Button
+                                                onClick={() => handleCancelOrder(ord._id)}
+                                                disabled={cancellingId === ord._id}
+                                                variant="outlined"
+                                                color="error"
+                                                size="small"
+                                                sx={{ borderRadius: "9999px", textTransform: "none", px: 2 }}
+                                            >
+                                                Cancel Order
+                                            </Button>
+                                        )}
+                                    </Box>
+                                </Box>
                             );
                         })}
-                    </Grid>
-                )}
-            </Container>
-
-            {/* Order Details Modal (calls getById inside) */}
-            <Dialog
-                open={openDetails}
-                onClose={() => !modalLoading && setOpenDetails(false)}
-                maxWidth="md"
-                fullWidth
-                sx={{
-                    "& .MuiDialog-paper": {
-                        backgroundColor: "#0f172a !important",
-                        color: "#ffffff !important",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                        borderRadius: "24px",
-                        padding: { xs: 1.5, sm: 3 }
-                    }
-                }}
-            >
-                {modalLoading ? (
-                    <Box sx={{ display: "flex", p: 10, alignItems: "center", justifyContent: "center" }}>
-                        <CircularProgress sx={{ color: "#3b82f6" }} />
                     </Box>
-                ) : selectedOrder ? (
-                    <>
-                        <DialogTitle sx={{ p: 2, pb: 1 }}>
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 1.5 }}>
-                                <Box>
-                                    <Typography variant="h5" sx={{ fontWeight: 900, fontSize: "1.35rem" }}>
-                                        Order Details
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.4)" }}>
-                                        ID: {selectedOrder._id}
-                                    </Typography>
+                )}
+
+                {/* Details Modal */}
+                <Dialog
+                    open={openDetails}
+                    onClose={() => setOpenDetails(false)}
+                    maxWidth="sm"
+                    fullWidth
+                    slotProps={{
+                        paper: {
+                            sx: {
+                                backgroundColor: "rgba(15, 23, 42, 0.95)",
+                                backdropFilter: "blur(24px)",
+                                border: "1px solid rgba(255, 255, 255, 0.12)",
+                                borderRadius: "24px",
+                                color: "#ffffff",
+                                p: 1,
+                            }
+                        }
+                    }}
+                >
+                    <DialogTitle sx={{ fontWeight: 800, fontSize: "1.25rem", color: "#ffffff" }}>
+                        Order Breakdown & Invoice
+                    </DialogTitle>
+                    <DialogContent dividers sx={{ borderColor: "rgba(255, 255, 255, 0.1)" }}>
+                        {modalLoading || !selectedOrder ? (
+                            <Box sx={{ textAlign: "center", py: 4 }}>
+                                <CircularProgress color="primary" />
+                            </Box>
+                        ) : (
+                            <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+                                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <span>Status:</span>
+                                    {getStatusChip(selectedOrder.status || selectedOrder.orderStatus)}
                                 </Box>
-                                <Box
-                                    sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        color: getStatusStyle(selectedOrder.status).color,
-                                        backgroundColor: getStatusStyle(selectedOrder.status).bgColor,
-                                        px: 2.5,
-                                        py: 0.75,
-                                        borderRadius: "9999px",
-                                        fontSize: "13px",
-                                        fontWeight: 800
-                                    }}
-                                >
-                                    {getStatusStyle(selectedOrder.status).icon}
-                                    {getStatusStyle(selectedOrder.status).label}
+
+                                <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)" }} />
+
+                                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#ffffff" }}>
+                                    Itemized Prescription Medicines
+                                </Typography>
+                                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                                    {(selectedOrder.medicines || selectedOrder.items || []).map((item, idx) => {
+                                        const med = item.medicineId || {};
+                                        const price = med.sellingPrice || item.price || 0;
+                                        return (
+                                            <Box key={idx} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.9rem" }}>
+                                                <span>{med.medicineName || item.name || "Medicine"} x {item.quantity}</span>
+                                                <strong style={{ color: "#34d399" }}>₹{price * item.quantity}</strong>
+                                            </Box>
+                                        );
+                                    })}
+                                </Box>
+
+                                <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)" }} />
+
+                                <Box sx={{ display: "flex", justifyContent: "space-between", fontWeight: 800, fontSize: "1.1rem" }}>
+                                    <span>Total Invoice Amount:</span>
+                                    <span style={{ color: "#34d399" }}>₹{selectedOrder.totalAmount}</span>
                                 </Box>
                             </Box>
-                        </DialogTitle>
-                        
-                        <DialogContent sx={{ p: 2, mt: 1 }}>
-                            <Grid container spacing={3.5}>
-                                {/* Left side: Product lists */}
-                                <Grid item xs={12} md={7}>
-                                    <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-                                        <Pill size={16} className="text-blue-400" />
-                                        <span>Prescribed Items</span>
-                                    </Typography>
-                                    
-                                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, maxH: "320px", overflowY: "auto", pr: 1 }}>
-                                        {selectedOrder.items.map((item, index) => {
-                                            const med = item.medicineId || {};
-                                            return (
-                                                <Box
-                                                    key={index}
-                                                    sx={{
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        justifyContent: "space-between",
-                                                        p: 2,
-                                                        borderRadius: "16px",
-                                                        border: "1px solid rgba(255, 255, 255, 0.04)",
-                                                        backgroundColor: "rgba(255,255,255,0.02)"
-                                                    }}
-                                                >
-                                                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                                                        <Box sx={{ width: 44, height: 44, borderRadius: "8px", backgroundColor: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
-                                                            {med.image ? (
-                                                                <img
-                                                                    src={med.image}
-                                                                    alt={med.medicineName}
-                                                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                                                />
-                                                            ) : (
-                                                                <Pill size={18} className="text-blue-400" />
-                                                            )}
-                                                        </Box>
-                                                        <Box>
-                                                            <Typography sx={{ fontWeight: 700, fontSize: "14px" }}>
-                                                                {med.medicineName || "Unknown Medicine"}
-                                                            </Typography>
-                                                            <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "11px" }}>
-                                                                {med.genericName} {med.strength && `(${med.strength})`}
-                                                            </Typography>
-                                                            <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "11px", mt: 0.5 }}>
-                                                                Qty: {item.quantity} × ₹{item.price}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Box>
-                                                    <Typography sx={{ fontWeight: 800, color: "#4ade80", fontSize: "14px" }}>
-                                                        ₹{item.price * item.quantity}
-                                                    </Typography>
-                                                </Box>
-                                            );
-                                        })}
-                                    </Box>
-                                    
-                                    <Divider sx={{ my: 3, borderColor: "rgba(255,255,255,0.08)" }} />
-                                    
-                                    {/* Order stats checkout breakdown */}
-                                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, px: 1 }}>
-                                        <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
-                                            <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.5)" }}>Subtotal</Typography>
-                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>₹{selectedOrder.totalAmount}</Typography>
-                                        </Box>
-                                        <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
-                                            <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.5)" }}>Shipping</Typography>
-                                            <Typography variant="body2" sx={{ color: "#4ade80", fontWeight: 600 }}>FREE</Typography>
-                                        </Box>
-                                        <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: "13px" }}>
-                                            <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.5)" }}>GST / Levies</Typography>
-                                            <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.3)" }}>Included</Typography>
-                                        </Box>
-                                        <Divider sx={{ my: 0.5, borderColor: "rgba(255,255,255,0.05)" }} />
-                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                            <Typography sx={{ fontWeight: 800, fontSize: "15px" }}>Grand Total</Typography>
-                                            <Typography sx={{ fontWeight: 900, color: "#3b82f6", fontSize: "1.2rem" }}>₹{selectedOrder.totalAmount}</Typography>
-                                        </Box>
-                                    </Box>
-                                </Grid>
-
-                                {/* Right side: Shipping address details */}
-                                <Grid item xs={12} md={5}>
-                                    <Paper
-                                        variant="outlined"
-                                        sx={{
-                                            p: 2.5,
-                                            borderRadius: "18px",
-                                            border: "1px solid rgba(255, 255, 255, 0.05)",
-                                            backgroundColor: "rgba(255,255,255,0.01)",
-                                            color: "#ffffff"
-                                        }}
-                                    >
-                                        <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5, display: "flex", alignItems: "center", gap: 1, textTransform: "uppercase", fontSize: "11px", letterSpacing: "0.05em", color: "rgba(255,255,255,0.5)" }}>
-                                            <MapPin size={12} />
-                                            <span>Delivery Address</span>
-                                        </Typography>
-                                        
-                                        {selectedOrder.addressId ? (
-                                            <Box sx={{ fontSize: "13px", lineHeight: 1.6 }}>
-                                                {(() => {
-                                                    try {
-                                                        const addr = typeof selectedOrder.addressId === "string" 
-                                                            ? JSON.parse(selectedOrder.addressId) 
-                                                            : selectedOrder.addressId;
-                                                        return (
-                                                            <>
-                                                                <Typography sx={{ fontWeight: 700, mb: 0.5 }}>{user?.name}</Typography>
-                                                                <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>{addr.addressLine1}</Typography>
-                                                                {addr.addressLine2 && (
-                                                                    <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>{addr.addressLine2}</Typography>
-                                                                )}
-                                                                <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>
-                                                                    {addr.city}, {addr.state} - {addr.pincode}
-                                                                </Typography>
-                                                            </>
-                                                        );
-                                                    } catch (e) {
-                                                        return <Typography sx={{ color: "rgba(255,255,255,0.7)" }}>{String(selectedOrder.addressId)}</Typography>;
-                                                    }
-                                                })()}
-                                            </Box>
-                                        ) : (
-                                            <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.4)" }}>No address record populated</Typography>
-                                        )}
-                                    </Paper>
-
-                                    <Paper
-                                        variant="outlined"
-                                        sx={{
-                                            p: 2.5,
-                                            mt: 2.5,
-                                            borderRadius: "18px",
-                                            border: "1px solid rgba(255, 255, 255, 0.05)",
-                                            backgroundColor: "rgba(255,255,255,0.01)",
-                                            color: "#ffffff"
-                                        }}
-                                    >
-                                        <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5, display: "flex", alignItems: "center", gap: 1, textTransform: "uppercase", fontSize: "11px", letterSpacing: "0.05em", color: "rgba(255,255,255,0.5)" }}>
-                                            <CreditCard size={12} />
-                                            <span>Billing & Prescriptions</span>
-                                        </Typography>
-                                        
-                                        <Box sx={{ fontSize: "13px", display: "flex", flexDirection: "column", gap: 1 }}>
-                                            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                                                <span style={{ color: "rgba(255,255,255,0.45)" }}>Payment:</span>
-                                                <span style={{ fontWeight: 700 }}>{selectedOrder.paymentMethod}</span>
-                                            </Box>
-                                            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                                                <span style={{ color: "rgba(255,255,255,0.45)" }}>Payment Status:</span>
-                                                <span style={{ color: selectedOrder.paymentStatus === "Paid" ? "#4ade80" : "#f59e0b", fontWeight: 700 }}>
-                                                    {selectedOrder.paymentStatus}
-                                                </span>
-                                            </Box>
-                                            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                                                <span style={{ color: "rgba(255,255,255,0.45)" }}>Rx Prescribed:</span>
-                                                <span>{selectedOrder.rxRequired ? "Required" : "Not Required"}</span>
-                                            </Box>
-                                            {selectedOrder.rxRequired && (
-                                                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                                                    <span style={{ color: "rgba(255,255,255,0.45)" }}>Rx Verification:</span>
-                                                    <span style={{ color: selectedOrder.rxVerified ? "#4ade80" : "#f59e0b", fontWeight: 700 }}>
-                                                        {selectedOrder.rxVerified ? "Verified" : "Pending Audit"}
-                                                    </span>
-                                                </Box>
-                                            )}
-                                        </Box>
-                                    </Paper>
-                                </Grid>
-                            </Grid>
-                        </DialogContent>
-                        
-                        <DialogActions sx={{ p: 2, pt: 1, borderTop: "1px solid rgba(255,255,255,0.06)", mt: 2, gap: 1 }}>
-                            <Button
-                                onClick={() => handleHideOrder(selectedOrder._id)}
-                                disabled={hidingId === selectedOrder._id}
-                                color="error"
-                                sx={{ textTransform: "none", fontWeight: 600, mr: "auto", color: "rgba(239,68,68,0.7)", "&:hover": { color: "#ef4444", backgroundColor: "rgba(239,68,68,0.1)" } }}
-                                startIcon={<Trash2 size={16} />}
-                            >
-                                Delete
-                            </Button>
-                            {selectedOrder.status === "New Orders" && (
-                                <Button
-                                    onClick={() => handleCancelOrder(selectedOrder._id)}
-                                    disabled={cancellingId === selectedOrder._id}
-                                    variant="outlined"
-                                    color="error"
-                                    sx={{
-                                        textTransform: "none",
-                                        fontWeight: 650,
-                                        borderRadius: "10px",
-                                        borderColor: "rgba(239, 68, 68, 0.4)",
-                                        "&:hover": {
-                                            borderColor: "rgba(239, 68, 68, 0.7)",
-                                            backgroundColor: "rgba(239, 68, 68, 0.05)"
-                                        }
-                                    }}
-                                >
-                                    {cancellingId === selectedOrder._id ? "Cancelling..." : "Cancel Order"}
-                                </Button>
-                            )}
-                            <Button
-                                onClick={() => setOpenDetails(false)}
-                                variant="contained"
-                                sx={{
-                                    textTransform: "none",
-                                    fontWeight: 700,
-                                    px: 3.5,
-                                    borderRadius: "10px",
-                                    backgroundColor: "rgba(255, 255, 255, 0.1)",
-                                    color: "#ffffff",
-                                    "&:hover": {
-                                        backgroundColor: "rgba(255, 255, 255, 0.15)"
-                                    }
-                                }}
-                            >
-                                Close
-                            </Button>
-                        </DialogActions>
-                    </>
-                ) : (
-                    <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.4)", py: 4, textAlign: "center" }}>
-                        Failed to resolve order data.
-                    </Typography>
-                )}
-            </Dialog>
+                        )}
+                    </DialogContent>
+                    <DialogActions sx={{ p: 2 }}>
+                        <Button onClick={() => setOpenDetails(false)} sx={{ color: "rgba(255, 255, 255, 0.7)", textTransform: "none" }}>
+                            Close Window
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </Container>
         </Box>
     );
 }

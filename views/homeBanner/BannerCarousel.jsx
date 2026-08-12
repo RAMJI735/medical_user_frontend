@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, ShieldCheck, ArrowRight } from "lucide-react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
@@ -28,11 +28,10 @@ export default function BannerCarousel() {
     setActiveIndex((prev) => (prev - 1 + bannersList.length) % bannersList.length);
   }, [bannersList.length]);
 
-  // Fetch dynamic banners from BannerService
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const data = await BannerService.getBanners(true); // active banners only
+        const data = await BannerService.getBanners(true);
         if (data && data.length > 0) {
           setBannersList(data);
         }
@@ -45,7 +44,6 @@ export default function BannerCarousel() {
     fetchBanners();
   }, []);
 
-  // Setup autoplay timer
   useEffect(() => {
     if (!isPaused && bannersList.length > 0) {
       timerRef.current = setInterval(nextSlide, 5000);
@@ -57,10 +55,6 @@ export default function BannerCarousel() {
     };
   }, [isPaused, nextSlide, bannersList.length]);
 
-  const handleMouseEnter = () => setIsPaused(true);
-  const handleMouseLeave = () => setIsPaused(false);
-
-  // Helper to resolve background style (handles CSS gradient strings and standard image URLs)
   const getImageUrl = (imagePath) => {
     if (!imagePath) return "";
     if (
@@ -78,7 +72,7 @@ export default function BannerCarousel() {
   const getBackgroundStyle = (slide) => {
     if (!slide) return {};
     const bg = slide.background || slide.image;
-    if (!bg) return { backgroundColor: "#1e293b" };
+    if (!bg) return { backgroundColor: "#020617" };
 
     if (
       bg.includes("linear-gradient") ||
@@ -91,56 +85,36 @@ export default function BannerCarousel() {
 
     const imageUrl = getImageUrl(bg);
     return {
-      backgroundImage: `linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.05) 100%), url(${imageUrl})`,
+      backgroundImage: `linear-gradient(to top, rgba(2, 6, 23, 0.95) 0%, rgba(2, 6, 23, 0.6) 50%, rgba(2, 6, 23, 0.3) 100%), url(${imageUrl})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
       backgroundRepeat: "no-repeat",
     };
   };
 
-  // Keyframes for premium fadeInUp entrance animation
-  const fadeInUpAnimation = {
-    "@keyframes fadeInUp": {
-      "0%": {
-        opacity: 0,
-        transform: "translateY(24px)",
-      },
-      "100%": {
-        opacity: 1,
-        transform: "translateY(0)",
-      },
-    },
-    animation: "fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-  };
-
-  if (bannersList.length === 0) {
-    return null;
-  }
+  if (bannersList.length === 0) return null;
 
   const activeSlide = bannersList[activeIndex];
-
-  // Map fields dynamically to handle both API model and static json structure
   const titleText = activeSlide.title;
   const descriptionText = activeSlide.subtitle || activeSlide.description || "";
-  const linkUrl = activeSlide.button?.href || activeSlide.link;
-  const buttonLabel = activeSlide.button?.label || "Explore More";
+  const linkUrl = activeSlide.button?.href || activeSlide.link || "/dashboard/medicine";
+  const buttonLabel = activeSlide.button?.label || "Explore Products";
 
   return (
     <Box
       component="section"
-      id="planning"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
       sx={{
         position: "relative",
         width: "100%",
-        minHeight: { xs: "70vh", sm: "80vh", md: "90vh" },
+        minHeight: { xs: "75vh", sm: "80vh", md: "88vh" },
         display: "flex",
         flexDirection: "column",
-        justifyContent: { xs: "center", md: "flex-end" },
+        justifyContent: "center",
         alignItems: "center",
-        pt: { xs: 8, sm: 10, md: 0 },
-        pb: { xs: 6, sm: 8, md: 14 },
+        pt: { xs: 12, sm: 14, md: 16 },
+        pb: { xs: 8, sm: 10, md: 12 },
         px: { xs: 2, sm: 3 },
         overflow: "hidden",
         boxSizing: "border-box",
@@ -162,19 +136,18 @@ export default function BannerCarousel() {
         />
       ))}
 
-      {/* Premium Mesh Gradient Radial Overlay */}
+      {/* Decorative Radial Lighting */}
       <Box
         sx={{
           position: "absolute",
           inset: 0,
-          background: "radial-gradient(ellipse at center, transparent, rgba(0,0,0,0.15))",
-          mixBlendMode: "overlay",
+          background: "radial-gradient(ellipse at center, transparent 20%, rgba(2, 6, 23, 0.8) 100%)",
           pointerEvents: "none",
           zIndex: 2,
         }}
       />
 
-      {/* Slide Content Container */}
+      {/* Slide Content Card */}
       <Container
         maxWidth="md"
         sx={{
@@ -182,26 +155,59 @@ export default function BannerCarousel() {
           zIndex: 10,
           textAlign: "center",
           color: "#ffffff",
-          px: { xs: 1, sm: 2, md: 3 },
+          px: { xs: 2, sm: 4 },
           width: "100%",
         }}
       >
-        {/* Render text inside a wrapper keyed by activeIndex to re-trigger transition animation on slide change */}
-        <Box key={activeIndex} sx={fadeInUpAnimation}>
+        <Box
+          key={activeIndex}
+          sx={{
+            p: { xs: 3, sm: 5, md: 6 },
+            borderRadius: "28px",
+            backgroundColor: "rgba(15, 23, 42, 0.65)",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow: "0 30px 60px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(59, 130, 246, 0.15)",
+            animation: "fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+            "@keyframes fadeInUp": {
+              from: { opacity: 0, transform: "translateY(20px)" },
+              to: { opacity: 1, transform: "translateY(0)" },
+            },
+          }}
+        >
+          {/* Badge indicator */}
+          <Box
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 1,
+              px: 2,
+              py: 0.6,
+              borderRadius: "9999px",
+              backgroundColor: "rgba(59, 130, 246, 0.15)",
+              border: "1px solid rgba(59, 130, 246, 0.3)",
+              color: "#38bdf8",
+              fontSize: { xs: "0.75rem", sm: "0.85rem" },
+              fontWeight: 600,
+              mb: 2.5,
+            }}
+          >
+            <ShieldCheck size={16} />
+            <span>Certified Healthcare & Express Delivery</span>
+          </Box>
+
           <Typography
             variant="h1"
             sx={{
-              color: "rgba(255, 255, 255, 0.95)",
-              fontSize: { xs: "22px", sm: "36px", md: "52px" },
-              fontWeight: 700,
-              letterSpacing: "-0.01em",
-              lineHeight: { xs: 1.25, md: 1.3 },
-              maxWidth: "800px",
+              color: "#ffffff",
+              fontSize: { xs: "22px", sm: "34px", md: "48px" },
+              fontWeight: 800,
+              letterSpacing: "-0.02em",
+              lineHeight: { xs: 1.25, md: 1.2 },
+              maxWidth: "750px",
               mx: "auto",
-              mb: { xs: 1.5, sm: 2.5, md: 3 },
-              textShadow: "0 2px 10px rgba(0, 0, 0, 0.85), 0 4px 20px rgba(0, 0, 0, 0.4)",
-              wordBreak: "break-word",
-              overflowWrap: "break-word",
+              mb: { xs: 2, sm: 2.5 },
+              textShadow: "0 2px 10px rgba(0,0,0,0.8)",
             }}
           >
             {titleText}
@@ -211,16 +217,13 @@ export default function BannerCarousel() {
             <Typography
               variant="body1"
               sx={{
-                color: "rgba(255, 255, 255, 0.9)",
-                fontSize: { xs: "13px", sm: "16px", md: "19px" },
-                fontWeight: 500,
+                color: "rgba(255, 255, 255, 0.85)",
+                fontSize: { xs: "13px", sm: "16px", md: "18px" },
+                fontWeight: 400,
                 lineHeight: { xs: 1.5, md: 1.6 },
-                maxWidth: "600px",
+                maxWidth: "580px",
                 mx: "auto",
-                mb: { xs: 2.5, sm: 3, md: 4 },
-                textShadow: "0 2px 8px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.95)",
-                wordBreak: "break-word",
-                overflowWrap: "break-word",
+                mb: { xs: 3, sm: 4 },
               }}
             >
               {descriptionText}
@@ -232,22 +235,22 @@ export default function BannerCarousel() {
               component={Link}
               href={linkUrl}
               variant="contained"
+              endIcon={<ArrowRight size={18} />}
               sx={{
                 textTransform: "none",
-                background: "rgba(255, 255, 255, 0.9)",
-                color: "#1e293b",
-                fontWeight: 600,
-                fontSize: { xs: "0.875rem", sm: "1rem" },
-                padding: { xs: "0.5rem 1.5rem", sm: "0.625rem 2rem" },
+                background: "linear-gradient(to right, #3b82f6, #10b981)",
+                color: "#ffffff",
+                fontWeight: 700,
+                fontSize: { xs: "0.9rem", sm: "1rem" },
+                px: { xs: 3, sm: 4 },
+                py: { xs: 1.2, sm: 1.5 },
                 borderRadius: "9999px",
-                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)",
+                boxShadow: "0 10px 25px rgba(59, 130, 246, 0.4)",
                 transition: "all 0.3s ease",
-                maxWidth: "100%",
-                whiteSpace: "nowrap",
                 "&:hover": {
-                  background: "#ffffff",
+                  background: "linear-gradient(to right, #2563eb, #059669)",
                   transform: "translateY(-2px)",
-                  boxShadow: "0 15px 30px -5px rgba(0, 0, 0, 0.4)",
+                  boxShadow: "0 15px 30px rgba(16, 185, 129, 0.4)",
                 },
               }}
             >
@@ -257,28 +260,26 @@ export default function BannerCarousel() {
         </Box>
       </Container>
 
-      {/* Navigation Arrow Controls */}
+      {/* Navigation Arrow Controls (Desktop) */}
       {bannersList.length > 1 && (
         <>
           <IconButton
             onClick={prevSlide}
             sx={{
               position: "absolute",
-              left: 24,
+              left: { md: 24, lg: 40 },
               top: "50%",
               transform: "translateY(-50%)",
               zIndex: 15,
               color: "#ffffff",
-              backgroundColor: "rgba(255, 255, 255, 0.08)",
-              backdropFilter: "blur(8px)",
+              backgroundColor: "rgba(15, 23, 42, 0.7)",
+              backdropFilter: "blur(10px)",
               border: "1px solid rgba(255, 255, 255, 0.12)",
               display: { xs: "none", md: "inline-flex" },
-              padding: 1.5,
-              transition: "all 0.3s ease",
+              p: 1.5,
               "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.2)",
-                borderColor: "rgba(255, 255, 255, 0.3)",
-                transform: "translateY(-50%) scale(1.05)",
+                backgroundColor: "rgba(59, 130, 246, 0.3)",
+                borderColor: "#3b82f6",
               },
             }}
             aria-label="Previous slide"
@@ -290,21 +291,19 @@ export default function BannerCarousel() {
             onClick={nextSlide}
             sx={{
               position: "absolute",
-              right: 24,
+              right: { md: 24, lg: 40 },
               top: "50%",
               transform: "translateY(-50%)",
               zIndex: 15,
               color: "#ffffff",
-              backgroundColor: "rgba(255, 255, 255, 0.08)",
-              backdropFilter: "blur(8px)",
+              backgroundColor: "rgba(15, 23, 42, 0.7)",
+              backdropFilter: "blur(10px)",
               border: "1px solid rgba(255, 255, 255, 0.12)",
               display: { xs: "none", md: "inline-flex" },
-              padding: 1.5,
-              transition: "all 0.3s ease",
+              p: 1.5,
               "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.2)",
-                borderColor: "rgba(255, 255, 255, 0.3)",
-                transform: "translateY(-50%) scale(1.05)",
+                backgroundColor: "rgba(59, 130, 246, 0.3)",
+                borderColor: "#3b82f6",
               },
             }}
             aria-label="Next slide"
@@ -319,11 +318,11 @@ export default function BannerCarousel() {
         <Box
           sx={{
             position: "absolute",
-            bottom: { xs: 14, sm: 20, md: 28 },
+            bottom: { xs: 16, sm: 24 },
             left: "50%",
             transform: "translateX(-50%)",
             display: "flex",
-            gap: { xs: 1, sm: 1.5 },
+            gap: 1.5,
             zIndex: 12,
           }}
         >
@@ -332,15 +331,12 @@ export default function BannerCarousel() {
               key={index}
               onClick={() => setActiveIndex(index)}
               sx={{
-                width: index === activeIndex ? { xs: 20, sm: 28 } : { xs: 6, sm: 8 },
-                height: { xs: 6, sm: 8 },
+                width: index === activeIndex ? 28 : 8,
+                height: 8,
                 borderRadius: "9999px",
-                backgroundColor: index === activeIndex ? "#ffffff" : "rgba(255, 255, 255, 0.35)",
+                backgroundColor: index === activeIndex ? "#38bdf8" : "rgba(255, 255, 255, 0.3)",
                 cursor: "pointer",
-                transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-                "&:hover": {
-                  backgroundColor: index === activeIndex ? "#ffffff" : "rgba(255, 255, 255, 0.65)",
-                },
+                transition: "all 0.35s ease",
               }}
             />
           ))}
