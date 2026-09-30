@@ -1,7 +1,7 @@
 [
   {
     "id": "medicine",
-    "title": "Medicine Delivery",
+    "title": "Online Medicine Delivery",
     "subtitle": "Get your medicines delivered at your doorstep",
     "background": "linear-gradient(to right, #e11d48, #d946ef, #f97316)",
     "button": {

@@ -59,6 +59,19 @@ function Index() {
         setActiveCategory(categoryId);
     }, [categoryId]);
 
+    // Dynamic Title for Categories (SEO & UX)
+    useEffect(() => {
+        if (!mounted) return;
+        if (activeCategory && categories.length > 0) {
+            const currentCat = categories.find((c) => c._id === activeCategory);
+            if (currentCat && currentCat.categoryName) {
+                document.title = `${currentCat.categoryName} | Healthcare Expert`;
+                return;
+            }
+        }
+        document.title = "Medicines & Pharmacy Store | Healthcare Expert";
+    }, [activeCategory, categories, mounted]);
+
     // Load cart summary if user logged in
     useEffect(() => {
         if (!mounted || !user) return;

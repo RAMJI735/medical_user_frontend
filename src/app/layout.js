@@ -16,8 +16,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Healthcare Expert - Digital Pharmacy & Care",
-  description: "Authentic prescription medicines and daily healthcare services",
+  metadataBase: new URL("https://medical-user-frontend.vercel.app"),
+
+  title: "Online Pharmacy & Medicine Delivery | Healthcare Expert",
+
+  description:
+    "Order medicines online with Healthcare Expert. Browse medicines, healthcare products and wellness essentials with convenient home delivery.",
+
+  alternates: {
+    canonical: "/",
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+  },
+
+  openGraph: {
+    title: "Online Pharmacy & Medicine Delivery | Healthcare Expert",
+    description:
+      "Order medicines and healthcare products online with convenient home delivery.",
+    url: "https://medical-user-frontend.vercel.app/",
+    siteName: "Healthcare Expert",
+    type: "website",
+  },
+
   verification: {
     google: "1K_6BSvbhJyx8ABDuuSgGFKL2AS5iJsej18dQo87_lw",
   },
